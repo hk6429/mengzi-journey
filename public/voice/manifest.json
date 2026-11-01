@@ -1,0 +1,9 @@
+{
+  "voice": "opuscar-tts-voxcpm",
+  "files": {
+    "fields-y": {
+      "hash": "668d01e458f12ee0bf9e3d82097a41c8ab3992eae9503563e1853d67302d1577",
+      "speed": 1.1
+    }
+  }
+}

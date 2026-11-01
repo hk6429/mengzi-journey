@@ -1,0 +1,7 @@
+import assert from 'node:assert/strict';import {chromium} from 'playwright';
+const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+await page.addInitScript(()=>{
+  window.__audio=[];window.Audio=class{constructor(url){this.url=url;this.paused=true;window.__audio.push(this)}async play(){if(window.__failAudio)throw Error('missing');this.paused=false}pause(){this.paused=true}};
+  window.SpeechSynthesisUtterance=class{constructor(text){this.text=text}};Object.defineProperty(window,'speechSynthesis',{value:{speaking:false,speak(u){this.speaking=true;window.__spoken=u.text},cancel(){this.speaking=false}}});
+});
+try{await page.goto('http://127.0.0.1:8899/',{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>window.__mengzi);if(await page.locator('#intro').isVisible())await page.click('#startJourney');await page.click('#read');assert.match(await page.locator('#audioStatus').innerText(),/預錄/);assert.equal(await page.evaluate(()=>window.__audio[0].url),'./voice/fields-y.mp3');await page.click('#vernacular');assert.equal(await page.evaluate(()=>window.__audio[0].paused),true);await page.evaluate(()=>window.__failAudio=true);await page.click('#read');assert.match(await page.locator('#audioStatus').innerText(),/裝置語音/);assert.ok((await page.evaluate(()=>window.__spoken)).startsWith('我是孟子'));await page.click('#next');assert.equal(await page.evaluate(()=>speechSynthesis.speaking),false);console.log('通過：預錄路徑、換模式停止、缺檔裝置語音備援、換段停止。')}finally{await browser.close()}

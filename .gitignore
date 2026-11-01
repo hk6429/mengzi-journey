@@ -1,0 +1,8 @@
+node_modules/
+dist/
+review/
+.DS_Store
+
+.env
+.env.*
+public/voice/*.mp3
