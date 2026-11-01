@@ -41,6 +41,13 @@ export function createScene(container) {
   let group; let hero; let station=0; const targetPoint=new THREE.Vector3(0,1,0); let heroDestination=new THREE.Vector3(0,0,2); let desiredDistance=null;controls.addEventListener('start',()=>{desiredDistance=null});
   const material=c=>new THREE.MeshStandardMaterial({color:c,roughness:.9});
   const hallAsset=new Promise(resolve=>new GLTFLoader().load('./models/warring-hall.glb',g=>resolve(g.scene),undefined,()=>resolve(null)));
+  const slipsAsset=new Promise(resolve=>new GLTFLoader().load('./models/bamboo-slips.glb',g=>resolve(g.scene),undefined,()=>resolve(null)));
+  function slips(x,y,z,width){
+    const owner=group,fallback=[];
+    for(let n=0;n<6;n++)fallback.push(box(x-width/2+n*width/6,y,z,width/7,.035,.55,'#d2bb87'));
+    for(const offset of [-.18,.18])fallback.push(box(x,y+.04,z+offset,width,.025,.025,'#76543b'));
+    slipsAsset.then(model=>{if(!model)return;const instance=model.clone(true);let bounds=new THREE.Box3().setFromObject(instance);const size=bounds.getSize(new THREE.Vector3());if(!size.x||!size.z)return;instance.scale.setScalar(width/Math.max(size.x,size.z));bounds.setFromObject(instance);const center=bounds.getCenter(new THREE.Vector3());instance.position.set(x-center.x,y-bounds.min.y,z-center.z);instance.userData.asset='bamboo-slips';owner.add(instance);fallback.forEach(o=>{owner.remove(o);o.geometry.dispose();o.material.dispose()})});
+  }
   function box(x,y,z,w,h,d,c){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material(c)); o.position.set(x,y+h/2,z); group.add(o);return o}
   function tree(x,z){const t=new THREE.Group();const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.12,.18,1.6,7),material('#70523b'));trunk.position.y=.8;t.add(trunk);for(let i=0;i<3;i++){const crown=new THREE.Mesh(new THREE.SphereGeometry(.6-i*.1,8,6),material(i%2?'#648469':'#526e55'));crown.position.set((i-1)*.28,1.6+i*.25,0);t.add(crown)}t.position.set(x,0,z);group.add(t)}
   function building(x,z){
@@ -59,7 +66,7 @@ export function createScene(container) {
     if(i===3){box(-.25,0,0,6,.04,2.5,'#7babb0');for(let n=0;n<6;n++)box(-2.5+n*.9,.2,0,.78,.16,1.8,'#926a45');box(2,0,-2,1.8,.8,1.2,'#785641');for(let n=0;n<5;n++)box(1.4+n*.27,.8,-2,.18,.06,.7,'#dbc392')}
     if(i===4){building(1,-2);box(-2,0,0,1.8,.7,1,'#77543b');box(-2,.7,0,1.3,.08,.7,'#dfcea4')}
     if(i===5){for(let n=0;n<5;n++)box(-3+n*1.5,0,-2,1.45,1.4,.8,'#b49d77');building(2.5,-2.6);person(1,-1,'#6f7371')}
-    const helpers={group,box,person,tree,building,material,THREE};buildStationsA(i,helpers);buildStationsB(i,helpers);landmarks[i].forEach(addLabel);
+    const helpers={group,box,person,tree,building,slips,material,THREE};buildStationsA(i,helpers);buildStationsB(i,helpers);landmarks[i].forEach(addLabel);
   }
   for(let i=0;i<6;i++)build(i);
   group=groups[0];
