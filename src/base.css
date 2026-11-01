@@ -1,0 +1,11 @@
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html,body{height:100%;margin:0;overflow:hidden}
+body{background:#151a33;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;color:#f6efe0}
+#app{position:fixed;inset:0}
+#app canvas{display:block}
+#loader{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:radial-gradient(ellipse at 50% 40%,#2a3366,#0f1226);z-index:100;transition:opacity .5s}
+#loader.is-done{opacity:0;pointer-events:none}
+#loader a{color:#ffe7a8;text-decoration:underline;font-size:16px;padding:10px 4px}
+#loader a:focus-visible{outline:3px solid #ffe7a8;outline-offset:3px}
+#loader.is-error #loader-msg{color:#ffb4a0;max-width:30em;text-align:center;padding:0 16px}
+#loader[hidden]{display:none}

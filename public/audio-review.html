@@ -1,6 +1,0 @@
-<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>孟子朗讀核對</title><style>body{font:18px/1.8 system-ui;max-width:850px;margin:auto;padding:1.5rem;background:#fbf4e4;color:#302820}audio{width:100%}section{padding:1rem 0;border-bottom:1px solid #b7a586}summary{cursor:pointer;padding:1rem}h1,h2,h3,a{color:#873d2e}</style><a href="./">返回旅程</a><h1>孟子朗讀核對</h1><p>六段古文、三十段白話。請優先確認傅說、膠鬲、行拂亂、曾益、拂士的讀音，以及句末是否完整。檔案檢查通過仍需人工聽讀。</p><main></main><script type="module">
-import {stations} from './src/data.js';
-const el=(tag,text)=>{const node=document.createElement(tag);if(text)node.textContent=text;return node};
-const clip=(parent,text,id)=>{parent.append(el('p',text));const audio=el('audio');audio.controls=true;audio.preload='none';audio.src=`./voice/${id}.mp3`;parent.append(audio)};
-stations.forEach((station,i)=>{const section=el('section');section.append(el('h2',`第 ${i+1} 站：${station.name}`),el('h3','古文'));clip(section,station.yuan,station.id+'-y');const details=el('details');details.append(el('summary','五段白話'));station.story.forEach((text,n)=>{details.append(el('h3',`第 ${n+1} 段`));clip(details,text,`${station.id}-${n+1}`)});section.append(details);document.querySelector('main').append(section)});
-</script></html>

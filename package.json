@@ -1,17 +1,19 @@
 {
-  "name": "mengzi-journey",
+  "name": "ailianshuo-journey",
   "version": "0.1.0",
   "private": true,
+  "description": "愛蓮說・濂溪泛舟：化身周敦頤划舟訪花，八站 3D 繪本，古文白話切換、朗讀、測驗與證書",
   "type": "module",
   "scripts": {
-    "test": "node --test test/*.test.mjs",
     "build": "node scripts/build.mjs",
-    "dev": "node scripts/serve.mjs"
+    "dev": "node scripts/serve.mjs",
+    "test": "node --test test/*.test.mjs",
+    "shot": "node scripts/shot.mjs"
   },
   "dependencies": {
-    "three": "^0.160.0"
+    "three": "0.160.0"
   },
   "devDependencies": {
-    "playwright": "^1.58.2"
+    "playwright": "1.58.2"
   }
 }
