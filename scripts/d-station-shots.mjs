@@ -1,15 +1,15 @@
 // D 線第五輪：三種尺寸逐站截圖＋量測（面板蓋住主角／島心、按鈕 <44px、最小字級）
-// node scripts/d-station-shots.mjs [網址=http://127.0.0.1:8824/]  → review/shots/r5-d/<尺寸>-<站>.png
+// node scripts/d-station-shots.mjs [網址=http://127.0.0.1:8884/]  → review/d-stations/<尺寸>-<站>.png
 import { chromium } from 'playwright';
 import fs from 'node:fs';
-const base = process.argv[2] || 'http://127.0.0.1:8824/';
-const dir = 'review/shots/r5-d'; fs.mkdirSync(dir, { recursive: true });
+const base = process.argv[2] || 'http://127.0.0.1:8884/';
+const dir = 'review/d-stations'; fs.mkdirSync(dir, { recursive: true });
 const b = await chromium.launch({ args: ['--use-angle=metal', '--enable-gpu'] });
 const errs = [], rows = [];
 for (const [w, h, n] of [[390, 844, 'phone'], [844, 390, 'land'], [820, 1180, 'pad']]) {
   const c = await b.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
   const p = await c.newPage(); p.on('pageerror', e => errs.push(e.message)); p.on('console', m => m.type() === 'error' && errs.push(m.text()));
-  await p.goto(base + '?planet=baihua'); await p.waitForFunction(() => window.__booted, null, { timeout: 30000 });
+  await p.goto(base + '?planet=fields'); await p.waitForFunction(() => window.__booted, null, { timeout: 30000 });
   const ids = await p.evaluate(() => window.__ctx.planets.map(x => x.id));
   for (const id of ids) {
     await p.evaluate(i => { window.__ctx.goPlanet(i); setTimeout(() => window.__ctx.skipFlight?.(), 300); }, id);

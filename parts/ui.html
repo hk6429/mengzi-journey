@@ -1,14 +1,14 @@
-<div id="loader"><div class="loader-title">愛蓮說・蓮池蛙躍</div><div id="loader-msg" role="status">大青蛙正在荷葉上等你…</div><a href="guide.html">先看文字版故事</a></div>
-<div id="app" role="img" aria-label="可拖曳旋轉的 3D 仙界蓮池，有〈愛蓮說〉裡的八片大荷葉"></div>
+<div id="loader"><div class="loader-title">孟子・憂患之旅</div><div id="loader-msg" role="status">扁舟正在渡口等你…</div><a href="guide.html">先看文字版故事</a></div>
+<div id="app" role="img" aria-label="可拖曳旋轉的 3D 大河場景，有六座依序相連的河中崖島"></div>
 <div id="ui">
-  <svg class="ui-defs" aria-hidden="true" width="0" height="0"><symbol id="ui-seal-sym" viewBox="0 0 24 24"><rect x="1.5" y="1.5" width="21" height="21" rx="2.5" fill="#c0392b"/><rect x="4" y="4" width="16" height="16" rx="1" fill="none" stroke="#f3ead6" stroke-width="1.4"/><text x="12" y="16.6" text-anchor="middle" font-size="12" font-weight="700" fill="#f3ead6" font-family="BiauKai,Kaiti TC,STKaiti,serif">君</text></symbol></svg>
+  <svg class="ui-defs" aria-hidden="true" width="0" height="0"><symbol id="ui-seal-sym" viewBox="0 0 24 24"><rect x="1.5" y="1.5" width="21" height="21" rx="2.5" fill="#c0392b"/><rect x="4" y="4" width="16" height="16" rx="1" fill="none" stroke="#f3ead6" stroke-width="1.4"/><text x="12" y="16.6" text-anchor="middle" font-size="12" font-weight="700" fill="#f3ead6" font-family="BiauKai,Kaiti TC,STKaiti,serif">憂</text></symbol></svg>
   <header class="ui-top">
-    <div class="ui-brand"><h1>愛蓮說・蓮池蛙躍</h1><p>化身周敦頤，騎蛙看蓮為什麼是花中君子</p></div>
+    <div class="ui-brand"><h1>孟子・憂患之旅</h1><p>化身孟子乘舟，看懂生於憂患、死於安樂</p></div>
     <nav class="ui-tools" aria-label="工具列">
       <div class="ui-seg" role="group" aria-label="閱讀版本"><button class="ui-btn" id="ui-mode-gu" type="button" aria-pressed="false">古文</button><button class="ui-btn" id="ui-mode-bai" type="button" aria-pressed="true">白話</button></div>
       <button class="ui-btn" id="ui-quiz-btn" type="button" aria-controls="ui-quiz" aria-expanded="false">測驗</button>
       <button class="ui-btn" id="ui-cert-btn" type="button" aria-controls="ui-end" aria-haspopup="dialog">證書</button>
-      <button class="ui-btn" id="ui-overview" type="button" title="拉遠看八片荷葉">全景</button>
+      <button class="ui-btn" id="ui-overview" type="button" title="拉遠看六座河島">全景</button>
       <button class="ui-btn" id="ui-route-btn" type="button" aria-controls="ui-route" aria-expanded="false">路線</button>
       <a class="ui-btn" href="guide.html">文字版</a>
     </nav>
@@ -19,32 +19,32 @@
         <path d="M6 70 Q60 30 104 58 Q150 24 196 54 Q240 28 294 64 L294 80 L6 80z" fill="#9c968a" opacity=".35"/>
         <path d="M40 76 Q90 44 130 66 Q170 40 220 70 L220 80 L40 80z" fill="#2b2622" opacity=".55"/>
         <path d="M14 84 Q150 74 286 84" fill="none" stroke="#2b2622" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="18 4 6 3" opacity=".7"/>
-        <circle cx="70" cy="26" r="7" fill="#c0392b" opacity=".7"/><circle cx="88" cy="20" r="4.5" fill="#e0b13c" opacity=".75"/><circle cx="232" cy="22" r="6" fill="#b5476b" opacity=".6"/><circle cx="160" cy="16" r="3.5" fill="#3f6e8c" opacity=".6"/>
+        <circle cx="70" cy="22" r="7" fill="#c0392b" opacity=".7"/><path d="M128 78 Q150 86 176 78 L170 82 Q150 88 134 82z" fill="#7a5a3a"/><path d="M168 78 L176 54" stroke="#2b2622" stroke-width="1.6"/><path d="M146 77 q4 -9 8 0z" fill="#3f4f4a"/>
         <use href="#ui-seal-sym" x="258" y="6" width="26" height="26"/>
       </svg>
       <div class="ui-eyebrow">一本可以走進去的繪本</div>
-      <h2 id="ui-cover-h">愛蓮說・蓮池蛙躍</h2>
-      <p class="ui-cover-sub">化身北宋的周敦頤，騎著大青蛙跳過仙界蓮池的八片大荷葉，<br>看看從爛泥裡長出來的蓮，為什麼是花中的君子。</p>
+      <h2 id="ui-cover-h">孟子・憂患之旅</h2>
+      <p class="ui-cover-sub">化身戰國的孟子，乘一葉扁舟沿著大河走訪六座崖島，<br>從六個人的起點，一路看懂「生於憂患，死於安樂」。</p>
       <button class="ui-btn ui-btn-primary ui-cover-go" id="ui-start" type="button">出發</button>
       <p class="ui-cover-hint">拖曳可以轉動畫面・點場景裡的東西看介紹</p>
     </div>
     <div class="ui-paper ui-cover-card ui-intro" id="ui-intro" hidden>
       <div class="ui-eyebrow">出發前的導讀</div>
-      <h2 id="ui-intro-h" tabindex="-1">一篇一百一十九字的說</h2>
-      <p>作者周敦頤是北宋的理學家，人稱濂溪先生。「說」是古代一種議論文體，常借一樣東西來說出道理；〈愛蓮說〉全文只有 119 個字。</p>
-      <p>他先說菊、說牡丹，最後才說蓮：蓮長在淤泥裡卻不被弄髒，正直又清香，就像他想做的君子。這種借物說出自己心志的寫法，叫「託物言志」。這趟旅程，就跟著他騎蛙走一遍。</p>
-      <p>右上角可以切換「古文」讀原文、「白話」聽周敦頤說故事；點有虛線的字，可以看註解。每一站有五題測驗，答對三題以上就過關，八站都過關，就能領一張證書，文言版「結業狀」和白話版「結業證書」任你選。</p>
-      <button class="ui-btn ui-btn-primary ui-cover-go" id="ui-intro-go" type="button">騎蛙出發</button>
+      <h2 id="ui-intro-h" tabindex="-1">從六個人說起的論說文</h2>
+      <p>孟子名軻，是戰國中期的鄒國人，繼承孔子的學說，是儒家的重要人物，後人尊稱「亞聖」。本文選自《孟子・告子下》，一般稱為〈生於憂患，死於安樂〉。</p>
+      <p>這是一篇論說文：先舉舜、傅說等六個人的例子，再提出論點，說明困境為什麼能讓人增長能力，接著從個人推到國家，最後得出「生於憂患，死於安樂」的結論。原文有「是人」和「斯人」兩種版本，意思都是「這個人」，本站採用「是人」。</p>
+      <p>右上角可以切換「古文」讀原文、「白話」聽孟子說故事；點有虛線的字，可以看註解。每一站有五題測驗，答對三題以上就過關，六站都過關，就能領一張證書，文言版「結業狀」和白話版「結業證書」任你選。</p>
+      <button class="ui-btn ui-btn-primary ui-cover-go" id="ui-intro-go" type="button">乘舟出發</button>
     </div>
   </div>
-  <aside id="ui-route" class="ui-glass" aria-label="八站路線" hidden>
+  <aside id="ui-route" class="ui-glass" aria-label="六站路線" hidden>
     <button class="ui-x" id="ui-route-x" type="button" aria-label="關閉路線">×</button>
     <div class="ui-eyebrow">路線</div>
-    <div class="ui-route-sub">騎著青蛙，一葉跳一葉</div>
+    <div class="ui-route-sub">乘著扁舟，一島接一島</div>
     <div class="ui-path"><svg class="ui-path-svg" id="ui-path-svg" aria-hidden="true"></svg><ol id="ui-route-list"></ol><svg class="ui-path-seal" id="ui-path-seal" viewBox="0 0 24 24" aria-hidden="true"><use href="#ui-seal-sym"/></svg></div>
     <footer class="ui-foot">
       <p>製作：陳乃誠（大乃老師）・<a id="ui-works" target="_blank" rel="noopener">大乃作品島</a></p>
-      <p>原著：〈愛蓮說〉（北宋・周敦頤），已屬公共領域；白話故事與註解皆為重新改寫。</p>
+      <p>原文：《孟子・告子下》（戰國・孟子），已屬公共領域；白話故事與註解皆為重新改寫。</p>
     </footer>
   </aside>
   <section id="ui-card" class="ui-glass" aria-labelledby="ui-name" hidden>
@@ -85,12 +85,12 @@
   <div id="ui-caption" hidden><span id="ui-cap-txt" aria-live="polite"></span><button class="ui-btn" id="ui-skip" type="button">略過路程 »</button></div>
   <div id="ui-end" class="ui-glass ui-paper" role="dialog" aria-modal="true" aria-labelledby="ui-end-h" hidden>
     <button class="ui-x" id="ui-end-close" type="button" aria-label="關閉結業證書">×</button>
-    <svg class="ui-end-art" viewBox="0 0 200 60" aria-hidden="true"><path d="M6 50 Q50 24 84 42 Q120 18 160 40 Q180 30 196 44 L196 56 L6 56z" fill="#9c968a" opacity=".35"/><ellipse cx="104" cy="44" rx="30" ry="7" fill="#6f9a78" opacity=".7"/><path d="M104 40 Q96 28 104 16 Q112 28 104 40z" fill="#f4d7de" stroke="#b5476b" stroke-width="1"/><path d="M104 40 Q88 32 90 22 Q100 30 104 40z M104 40 Q120 32 118 22 Q108 30 104 40z" fill="#f8e6ea" stroke="#b5476b" stroke-width="1"/><circle cx="40" cy="24" r="4" fill="#c0392b" opacity=".6"/><circle cx="150" cy="18" r="3" fill="#e0b13c" opacity=".7"/><use href="#ui-seal-sym" x="168" y="4" width="22" height="22"/></svg>
+    <svg class="ui-end-art" viewBox="0 0 200 60" aria-hidden="true"><path d="M6 50 Q50 24 84 42 Q120 18 160 40 Q180 30 196 44 L196 56 L6 56z" fill="#9c968a" opacity=".35"/><path d="M20 50 Q100 44 180 50" fill="none" stroke="#6f7f74" stroke-width="1.5" opacity=".7"/><path d="M80 44 Q104 52 132 44 L126 49 Q104 55 86 49z" fill="#7a5a3a"/><path d="M124 44 L132 22" stroke="#2b2622" stroke-width="1.4"/><path d="M100 43 q4 -9 8 0z" fill="#3f4f4a"/><circle cx="40" cy="24" r="4" fill="#c0392b" opacity=".6"/><circle cx="150" cy="18" r="3" fill="#e0b13c" opacity=".7"/><use href="#ui-seal-sym" x="168" y="4" width="22" height="22"/></svg>
     <div class="ui-eyebrow">旅程結束</div>
-    <h2 id="ui-end-h">蓮，花之君子者也</h2>
-    <p>青蛙停在濂溪書堂前的大荷葉上，夕陽把蓮池染成金色。從水陸百花、東籬黃菊、長安牡丹，到淤泥裡的蓮，周敦頤想告訴你：身在世間也能不被汙染，這樣的人，就是君子。</p>
+    <h2 id="ui-end-h">生於憂患，死於安樂</h2>
+    <p>扁舟停在城下碼頭，暮色把大河染成赭紅。從田裡的舜到市集中的百里奚，從個人的磨練到國家的興亡，孟子想提醒你：憂患能讓人警覺、長出能力，安逸卻可能讓人鬆懈。不過受苦本身不是目的，懂得求助、互相扶持，也是一種力量。</p>
     <div class="ui-cert" id="ui-cert">
-      <h3 id="ui-cert-h" tabindex="-1">愛蓮說蓮池蛙躍・結業證書</h3>
+      <h3 id="ui-cert-h" tabindex="-1">孟子憂患之旅・結業證書</h3>
       <p id="ui-cert-need"></p>
       <div id="ui-cert-form" hidden>
         <p class="ui-cert-score" id="ui-cert-score"></p>
@@ -100,13 +100,13 @@
         <div class="ui-seg ui-cert-ver" role="group" aria-labelledby="ui-cert-ver-l"><button class="ui-btn" id="ui-cert-ver-gu" type="button" aria-pressed="false">文言版・結業狀</button><button class="ui-btn" id="ui-cert-ver-bai" type="button" aria-pressed="true">白話版・結業證書</button></div>
         <div class="ui-ctrl"><button class="ui-btn ui-btn-primary" id="ui-cert-dl" type="button">儲存證書</button><button class="ui-btn" id="ui-cert-print" type="button">列印</button></div>
         <p class="ui-cert-msg" id="ui-cert-msg" role="status"></p>
-        <img class="ui-cert-img" id="ui-cert-img" alt="你的愛蓮說蓮池蛙躍證書" hidden>
+        <img class="ui-cert-img" id="ui-cert-img" alt="你的孟子憂患之旅證書" hidden>
         <p class="ui-cert-tip" id="ui-cert-tip" hidden>平板／手機：按「儲存證書」後選「儲存影像」就會存進相簿；也可以長按上面的證書圖存下來。</p>
       </div>
     </div>
-    <table class="ui-adults"><caption>三種花・三種人</caption><thead><tr><th scope="col">花</th><th scope="col">象徵哪種人</th><th scope="col">誰愛它・作者的感嘆</th></tr></thead><tbody id="ui-adults"></tbody></table>
-    <p class="ui-read">這裡的白話故事是重新改寫的。回頭把 119 字的原文從頭朗讀一遍，再找同樣託物言志的〈陋室銘〉讀讀看。<a href="guide.html#worksheet">印一張學習單</a></p>
-    <div class="ui-ctrl"><button class="ui-btn ui-btn-primary" id="ui-restart" type="button">再從水陸百花出發</button><button class="ui-btn" id="ui-end-x" type="button">留在這裡看看</button></div>
+    <table class="ui-adults"><caption>六個人的起點</caption><thead><tr><th scope="col">人物</th><th scope="col">原本的處境</th><th scope="col">後來被誰任用</th></tr></thead><tbody id="ui-adults"></tbody></table>
+    <p class="ui-read">這裡的白話故事是重新改寫的。回頭把原文從頭朗讀一遍，再想一想：你同意孟子的推論嗎？有沒有例外？<a href="guide.html#worksheet">印一張學習單</a></p>
+    <div class="ui-ctrl"><button class="ui-btn ui-btn-primary" id="ui-restart" type="button">再從田畝與版築出發</button><button class="ui-btn" id="ui-end-x" type="button">留在這裡看看</button></div>
   </div>
   <div id="ui-quiz" class="ui-glass ui-paper" role="dialog" aria-modal="true" aria-labelledby="ui-quiz-h" hidden>
     <button class="ui-x" id="ui-quiz-x" type="button" aria-label="關閉測驗">×</button>

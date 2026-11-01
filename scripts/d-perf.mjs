@@ -1,8 +1,8 @@
-// D 線手機效能量測：node scripts/d-perf.mjs [網址=http://127.0.0.1:8824/] [CPU 降速倍數=4]
+// D 線手機效能量測：node scripts/d-perf.mjs [網址=http://127.0.0.1:8884/] [CPU 降速倍數=4]
 // 手機模擬（390x844、觸控、DPR 3）＋CDP CPU throttle，requestAnimationFrame 計數 5 秒。
 // shortcut: 桌機 GPU 不會被 throttle，只降 CPU；真機 GPU 較弱，數字要再打折，真機實測才算數。
 import { chromium } from 'playwright';
-const base = process.argv[2] || 'http://127.0.0.1:8824/', rate = Number(process.argv[3] || 4);
+const base = process.argv[2] || 'http://127.0.0.1:8884/', rate = Number(process.argv[3] || 4);
 const b = await chromium.launch({ args: ['--use-angle=metal', '--enable-gpu'] });
 const fps = p => p.evaluate(() => new Promise(r => { let n = 0; const t0 = performance.now(); const f = () => { n++; if (performance.now() - t0 < 5000) requestAnimationFrame(f); else r(+(n * 1000 / (performance.now() - t0)).toFixed(1)); }; requestAnimationFrame(f); }));
 async function run(name, q, act) {
@@ -18,9 +18,9 @@ async function run(name, q, act) {
 }
 console.log(`手機模擬 390x844 DPR3，CPU ${rate}x 降速`);
 const r = [
-  await run('?planet=mudan 靜置', '?planet=mudan'),
-  await run('baihua→ju 騎蛙跳躍中', '?planet=baihua', () => window.__ctx.goPlanet('ju')),
-  await run('?planet=ju 特寫陶淵明', '?planet=ju', () => window.__ctx.focusEl('ju', 'tao'))
+  await run('?planet=market 靜置', '?planet=market'),
+  await run('fields→market 乘舟途中', '?planet=fields', () => window.__ctx.goPlanet('market')),
+  await run('?planet=market 特寫管仲囚車', '?planet=market', () => window.__ctx.focusEl('market', 'prison'))
 ];
 if (Math.min(...r) < 30) { console.log('有情境低於 30fps'); process.exitCode = 1; }
 await b.close();

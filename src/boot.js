@@ -22,7 +22,7 @@ function bootYield(msg) {
     await bootYield('宣紙緩緩鋪開…');
     DATA.planets.forEach((d, index) => { const p = { id: d.id, data: d, index }; ctx.planets.push(p); ctx.planetById.set(d.id, p); });
     initScene(ctx);
-    await bootYield('周敦頤騎蛙出發…');
+    await bootYield('孟子登舟出發…');
     if (typeof initUI === 'function') initUI(ctx);
     ctx.start();
     window.__ctx = ctx; window.__booted = true;
