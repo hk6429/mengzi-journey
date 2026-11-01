@@ -89,7 +89,14 @@ export function createScene(container) {
     walker.position.set(centers[i].x,0,2);heroDestination.copy(walker.position);
     targetPoint.set(centers[i].x,1,0);camera.position.add(targetPoint.clone().sub(controls.target));controls.target.copy(targetPoint);desiredDistance=16;
   }
-  function finishTravel(){if(!journey)return;const {destination,onArrive}=journey;journey=null;setStation(destination);travel.arrivals++;onArrive?.()}
+  function finishTravel(){
+    if(!journey)return;
+    const {destination,onArrive}=journey;
+    const arrival=journey.phase==='disembark'?{walker:walker.position.clone(),camera:camera.position.clone(),target:controls.target.clone()}:null;
+    journey=null;setStation(destination);
+    if(arrival){walker.position.copy(arrival.walker);camera.position.copy(arrival.camera);controls.target.copy(arrival.target)}
+    travel.arrivals++;onArrive?.();
+  }
   function travelTo(i,onArrive){
     if(!Number.isInteger(i)||i<0||i>=centers.length)return;
     travel.from=station;travel.to=i;journey={destination:i,onArrive,phase:'board'};

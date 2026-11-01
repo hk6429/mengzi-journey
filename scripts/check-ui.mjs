@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 import {stations} from '../src/data.js';
-const browser=await chromium.launch({headless:true});
-const page=await browser.newPage({viewport:{width:390,height:844}});
+const browser=await chromium.launch({headless:false});
+const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'});
 const errors=[];page.on('pageerror',e=>errors.push(e.message));
 try {
   await page.goto('http://127.0.0.1:8899/',{waitUntil:'domcontentloaded'}); await page.waitForFunction(()=>window.__mengzi);if(await page.locator('#intro').isVisible())await page.click('#startJourney');

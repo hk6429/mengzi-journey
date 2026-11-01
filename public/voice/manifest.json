@@ -6,7 +6,7 @@
       "speed": 1.1
     },
     "fields-1": {
-      "hash": "0abbdcce0ed6de33f045591c0b066670f31b91e4253656fb7967320d1783738a",
+      "hash": "720229ef502b43ccad133c603a8e8d40eac988eb5fc58815a763b2c391ee9878",
       "speed": 1.25
     },
     "fields-2": {
@@ -18,11 +18,11 @@
       "speed": 1.25
     },
     "fields-4": {
-      "hash": "e1915471e6fb35b1fd3c5923032f649acf6c6faf218bce3f2e01bf676fc2a5fc",
+      "hash": "528cc222035848b99741bfce15e3b1535f984b81fffad3bfe19daa32655c5d8d",
       "speed": 1.25
     },
     "fields-5": {
-      "hash": "634d2d97afc411cface26194b4122ea38b0dfbb18eeb7b430f1dc08f5b04058a",
+      "hash": "fc36d290c3bc6574e3c3696fd96a89fdbcb3a4c37d1f97326094866ebf028462",
       "speed": 1.25
     },
     "market-y": {
@@ -42,7 +42,7 @@
       "speed": 1.25
     },
     "market-4": {
-      "hash": "3928adec0eb7613cda28796a22b7094f838e7692212e5c90ef82044089f1d118",
+      "hash": "e050553c9f23bb5661ce6b4bc7b9061927fa277f092c614a80e4ea7e60819e61",
       "speed": 1.25
     },
     "market-5": {
@@ -66,11 +66,11 @@
       "speed": 1.25
     },
     "road-4": {
-      "hash": "7ff4d14379fa7498186d2358b00d618299aa472a6a791274d5863fb558f242d5",
+      "hash": "22e3e1476030c2787af59acd030b71e3deac5012961811c815166029ec9c212b",
       "speed": 1.25
     },
     "road-5": {
-      "hash": "1e3cf1413a58cd14f520d10c5e29da99c2e3b90f4eca266b206251d7cf9bfb0a",
+      "hash": "97c271842e8f40d7bd87c1eb8bb207c3f26ef26b0c9ef49ae95dce6a48306103",
       "speed": 1.25
     },
     "bridge-y": {
@@ -78,7 +78,7 @@
       "speed": 1.1
     },
     "bridge-1": {
-      "hash": "25826dea3f096d25199c14cd63847d22f6209b71f42ca8f9d5badb98ddc736db",
+      "hash": "99158a8f91c80c34e94e6455887ffeb52aecdb9407341341fd2d8634610ebfa6",
       "speed": 1.25
     },
     "bridge-2": {
@@ -90,11 +90,11 @@
       "speed": 1.25
     },
     "bridge-4": {
-      "hash": "cd007f37b0f3f8cd4217eb8a38071c4d27ac72704cde9f85e13183cd13fbbca2",
+      "hash": "2d60693593eeedaf16fcff46113fa58f6da88d90989c5de996c06fef6d0d4062",
       "speed": 1.25
     },
     "bridge-5": {
-      "hash": "d84b60eba16794db5fe68797073824b4d49cc2ba85d14da2be139ed78712177f",
+      "hash": "f99b4288fdcba53115ac3703164683624384da633f9992c61421d8ca9744d867",
       "speed": 1.25
     },
     "study-y": {
@@ -110,7 +110,7 @@
       "speed": 1.25
     },
     "study-3": {
-      "hash": "e1d1da52e0b74c0e7c0a0ae6a6c5c0d7a13b6b828182f3fbe6bf508b46def35a",
+      "hash": "f2f64361ea6c24a492302ceb5c99552858ef27504f93b94e722a55f6ab50bddf",
       "speed": 1.25
     },
     "study-4": {
@@ -126,7 +126,7 @@
       "speed": 1.1
     },
     "city-1": {
-      "hash": "c9a2a4c819f6da695e2cf4d24fa28298b582e972b63203e99d0cf612919a61b3",
+      "hash": "346b344c535683d92ca376dfb6c3fa39bfe93e29e7f1dad2bb2fabf3517c1af0",
       "speed": 1.25
     },
     "city-2": {
@@ -134,7 +134,7 @@
       "speed": 1.25
     },
     "city-3": {
-      "hash": "1239741fe725df19aa1e3eb2ef81608eb35e125eafc6263166c11e4b6a485608",
+      "hash": "3a28b33608a7348313cf2978b2a4ee5f6bc22384de867c5e0eaea5241c6ed7b8",
       "speed": 1.25
     },
     "city-4": {

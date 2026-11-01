@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
-import {mkdir,writeFile} from 'node:fs/promises';
+import {mkdir,writeFile,readFile} from 'node:fs/promises';
 import {chromium} from 'playwright';
 import {stations} from '../src/data.js';
 const b=await chromium.launch({headless:false});
 try{
- const p=await b.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'});
+ const p=await b.newPage({viewport:{width:820,height:1180},hasTouch:true,isMobile:true,reducedMotion:'reduce'});
  await p.addInitScript(ids=>{localStorage.setItem('mengzi-journey-v1',JSON.stringify({station:4,mode:'bai',name:'證書驗收',scores:Object.fromEntries(ids.map(id=>[id,3])),visited:[]}));sessionStorage.setItem('mengzi-intro-seen','1');localStorage.removeItem('mengzi-journey-v1-images')},stations.map(s=>s.id));
  await p.goto('http://127.0.0.1:8899/');await p.waitForFunction(()=>window.__mengzi?.riverInspect()?.scene);
  await p.evaluate(()=>window.__mengzi.riverInspect().character.updateMatrixWorld(true));
@@ -18,6 +18,10 @@ try{
  assert.deepEqual(await p.evaluate(()=>window.__mengzi.riverInspect().boat.position.toArray()),before.boat,'船位置須復原');
  await mkdir('review/certificates',{recursive:true});
  for(const [button,name] of [['#certGu','gu'],['#certBai','bai']]){await p.click(button);await p.waitForFunction(()=>{const i=document.querySelector('#certImage');return i.complete&&i.naturalWidth===2480&&i.naturalHeight===1754});const src=await p.locator('#certImage').getAttribute('src');await writeFile(`review/certificates/${name}.png`,Buffer.from(src.split(',')[1],'base64'))}
+ const [download]=await Promise.all([p.waitForEvent('download'),p.click('#downloadCert')]);
+ await download.saveAs('review/certificates/download.png');
+ assert.equal((await readFile('review/certificates/download.png')).subarray(0,8).toString('hex'),'89504e470d0a1a0a');
+ await p.screenshot({path:'review/certificates/touch-820.png'});
  await p.reload();await p.waitForFunction(()=>window.__mengzi);assert.equal(await p.locator('#progress').innerText(),'★');await p.click('#certificate');await p.waitForFunction(()=>!document.querySelector('#certForm').hidden);assert.equal(await p.locator('#certName').inputValue(),'證書驗收');
- console.log('通過：未拜訪六站也可產生六張完整比例場景圖、兩版 A4 證書、成績與姓名保留、重開可領。');
+ console.log('通過：未拜訪六站也可產生六張完整比例場景圖、兩版 A4 證書與實際 PNG 下載、成績與姓名保留、重開可領。');
 }finally{await b.close()}

@@ -3,4 +3,5 @@ await rm('dist',{recursive:true,force:true}); await mkdir('dist/vendor/three',{r
 for(const name of ['index.html','guide.html','teacher.html','style.css','src','public']) await cp(name,name==='public'?'dist':`dist/${name}`,{recursive:true});
 await cp('node_modules/three/build','dist/vendor/three/build',{recursive:true});
 await cp('node_modules/three/examples/jsm','dist/vendor/three/examples/jsm',{recursive:true});
+await cp('node_modules/three/LICENSE','dist/vendor/three/LICENSE');
 console.log('已建立 dist');

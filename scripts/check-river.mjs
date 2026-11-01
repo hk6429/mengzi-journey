@@ -63,6 +63,10 @@ try{
       await page.waitForFunction(n=>window.__mengzi.riverInspect().travel.arrivals===n,before.travel.arrivals+1);
     }
     const arrived=await inspect(page);
+    if(from===1){
+      assert.ok(arrived.characterPosition[2]>2.05&&arrived.characterPosition[2]<=6.6,'自然抵站須從碼頭移入島內，不可瞬移至中央');
+      await page.waitForFunction(()=>Math.abs(window.__mengzi.riverInspect().character.position.z-2)<.2,{},{timeout:10000});
+    }
     assert.ok(distance(arrived.boatPosition,arrived.islands[from+1].dockPosition)<4,`第 ${from+2} 站船未抵達碼頭`);
     assert.equal(await page.evaluate(()=>window.__mengzi.state.station),from+1);
     await page.waitForTimeout(250);
