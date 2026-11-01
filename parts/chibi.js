@@ -1,20 +1,23 @@
-// ================= CHIBI：日式 Q 版人物（頭身 1:1）＝C 線（愛蓮說） =================
+// ================= CHIBI：日式 Q 版人物（頭身 1:1）＝C 線（孟子・憂患之旅） =================
 // 介面（整合者定，A/B/C 只透過這個呼叫，不自己捏人）：
-//   const c = lpChibi({ who: 'zhou' | 'tao' | 'noble' | 'lady' | 'farmer' | 'child',
-//                       pose?: 'stand' | 'sit' | 'walk' | 'wave' | 'point' | 'bow' | 'hold' | 'surprised' | 'read' | 'write' | 'basket' | 'pick' | 'reach',
-//                       face?: 'smile' | 'sad' | 'surprised' | 'worried' | 'calm', scale?: 1, seed?: 0, colors?: { top, bottom, sash, hair, trim } });
-//   c 是 THREE.Group：腳底在原點、+z 是臉朝的方向、預設身高約 1.0（頭直徑約 0.5；child 約 0.85）。
-//   c.userData.anim(dt, t)：每幀呼叫（眨眼、呼吸、姿勢小動作）；c.userData.setPose(p)、c.userData.setFace(f)；setOutfit 保留為空操作（本作一人一套衣服）。
-// 角色：
-//   zhou 周敦頤（主角，北宋）：黑色東坡巾（高方筒、頂微收、前後兩片巾角）、淡青交領直裰、深色腰帶、黑布鞋、Q 版三綹小鬍子、手持書卷
-//   tao 陶淵明（東晉）：葛巾、粗布寬袍、長鬍、提竹籃（預設 pose 'basket'）
-//   noble 唐代男子：黑幞頭、圓領袍（seed 偶數緋、奇數綠；colors.top 可指定）
-//   lady 唐代女子：高髻、襦裙、披帛、豐腴
-//   farmer 採藕人：斗笠、短褐、捲褲管（小腿露出）
-//   child 宋代孩童：雙丫髻、短衫、小一號（×0.82）
+//   const c = lpChibi({ who, pose?, face?: 'smile' | 'sad' | 'surprised' | 'worried' | 'calm', scale?: 1, seed?: 0, colors?: { top, bottom, sash, hair, trim } });
+//   c 是 THREE.Group：腳底在原點、+z 是臉朝的方向、預設身高約 1.0（頭直徑約 0.5）。
+//   c.userData.anim(dt, t)：每幀呼叫（眨眼、呼吸、姿勢小動作）；c.userData.setPose(p)、c.userData.setFace(f)；setOutfit 保留為空操作（一人一套衣服）。
+// 角色（戰國；典故人物依其時代）：
+//   mengzi 孟子（主角）：束髮小冠、黛青交領右衽寬袖深衣、淺色大帶、布履、Q 版短鬚、持一卷竹簡（不戴襆頭、不拿摺扇）
+//   shun 舜（傳說）：束髮、粗麻短衣、赤腳、扶耒耜（預設 pose 'plough'）
+//   fuyue 傅說（商，傳說）：短衣束腰、捲褲管、持夯杵（預設 'tamp'）
+//   jiaoge 膠鬲（商末）：幅巾短衣、提魚簍（預設 'basket'）
+//   guanzhong 管仲（春秋齊）：樸素衣、頸上木枷（預設 'bound'）
+//   sunshuao 孫叔敖（春秋楚）：斗笠布衣、短鬚
+//   baili 百里奚（春秋秦）：白髮老人、臂上搭羊皮
+//   scholar 戰國士人／學生（seed 換衣色）、craftsman 工匠（幅巾短衣）、soldier 守城兵（皮甲＋戈，預設 'spear'）、
+//   minister 大臣（高冠寬袖，預設 'bow'）、boatman 船夫（斗笠短褐、撐竹篙，預設 'pole'）
+// pose：stand sit walk wave point bow hold surprised read write basket pick reach，本作加 plough（扶耒）tamp（夯土）carry（craftsman＝雙手前伸腰高合抬木料；其他人＝握背帶背行囊；木料、包袱 A/B 自備）；耒耜、夯杵也由 A 自備，plough／tamp 只做手勢
+//       bound（戴枷）talk（說話比手勢）spear（持戈）pole（撐篙）
 // 補充：
 //   - pose 'sit'／'write' 的臀部在 c.userData.seatY（已含 scale），A/B 把人放到座位高度 − seatY 即可。
-//   - 'read' 兩手捧著攤開的書卷；'write' 右手執筆；'basket' 左手提竹籃；'pick' 右手往前下方摘；'reach' 右手往前上方伸；'bow' 拱手（手上東西收起來）。
+//   - 'read' 兩手捧著攤開的竹簡；'bow' 拱手（手上東西收起來）；道具跟著姿勢出現（plough 耒耜、tamp 夯杵、spear 戈、pole 竹篙、bound 木枷）。
 //   - 臉是 canvas 畫的貼圖（依角色臉型＋表情＋眨眼快取共用）；沒有 canvas（node 測試）時臉部網格隱藏，不會報錯。
 //   - 材質用 lpCel（core.js）；還沒有時用本檔的 chCel（2 階柔和賽璐珞）。
 
@@ -281,32 +284,47 @@ function chConfig(who, outfit, seed, colors = {}) {
     c: { top: '#7a6a58', bottom: '#5f646a', trim: '#f1ece0', sash: '#3a4a5c', hair: '#2b2530', pants: '#5f646a', shoe: '#3a2e28', skin: CH_SKIN } };
   const cf = (o, c) => Object.assign({}, base, o, { c: Object.assign({}, base.c, c, colors) });
   const old = o => chFaceStyle({ male: true, old: true, eyeS: 0.8, blush: 0.25, brow: '#b8b3ab', ...o });
+  const M = o => chFaceStyle({ male: true, eyeS: 0.88, blush: 0.36, iris: ['#2a1d18', '#7a5236'], brow: '#2e2420', ...o });
+  const sd = seed | 0;
   switch (who) {
-    case 'zhou':  // 主角周敦頤：東坡巾＋淡青交領直裰＋深色腰帶＋黑布鞋，三綹小鬍子（Q 版不顯老）、溫和笑眼
-      return cf({ cloth: 'robe', hair: 'none', bangs: 'none', hat: 'dongpo', beard: '#2b2530', beardS: 0.55, prop: 'scroll',
-        fs: chFaceStyle({ male: true, eyeS: 0.9, blush: 0.36, iris: ['#2a1d18', '#7a5236'], brow: '#2e2420' }) },
-        { top: '#cfe0d6', bottom: '#cfe0d6', trim: '#8fb0a2', sash: '#2b2622', shoe: '#1f1c1b' });
-    case 'tao':   // 陶淵明：葛巾、粗布寬袍、長鬍、提竹籃
-      return cf({ cloth: 'robe', sleeve: 'wide', hair: 'none', bangs: 'none', hat: 'kerchief', kerchiefH: 0.15, beard: '#3a3430', beardLong: true, face: 'smile', pose: 'basket', prop: 'basket',
-        fs: chFaceStyle({ male: true, eyeS: 0.84, blush: 0.3, iris: ['#2a1d18', '#6a4a32'], brow: '#3a302a' }) },
-        { top: '#b7a585', bottom: '#b7a585', trim: '#e9dcc0', sash: '#6b5a48', kerchief: '#6e5a40', shoe: '#4a3e34' });
-    case 'noble': // 唐代男子：黑幞頭、圓領袍、革帶
-      return cf({ cloth: 'robe', collar: 'round', hair: 'knot', bangs: 'none', hat: 'futou', beard: (seed | 0) % 3 === 2 ? '#2b2530' : null, beardS: 0.6,
-        fs: chFaceStyle({ male: true, eyeS: 0.9, blush: 0.4, iris: ['#2a1d18', '#7a5236'], brow: '#2e2420' }) },
-        Object.assign((seed | 0) % 2 ? { top: '#5c8a6a', bottom: '#5c8a6a', trim: '#4a7258' } : { top: '#b5473b', bottom: '#b5473b', trim: '#933a30' }, { sash: '#2b2622', plate: '#e0b13c', shoe: '#231f1d' }));
-    case 'lady':  // 唐代女子：高髻、襦裙（高腰長裙）、披帛、豐腴
-      return cf({ female: true, cloth: 'ru', hair: 'gaoji', bangs: 'none', plump: 1.14, shawl: true,
-        fs: chFaceStyle({ eyeS: 0.92, blush: 0.62, iris: ['#2c1b15', '#8a5a3c'], lip: '#c0392b' }) },
-        { top: '#f3e3cf', bottom: (seed | 0) % 2 ? '#d98a5a' : '#c8506a', trim: '#f6ead6', sash: '#e0b13c', shawl: (seed | 0) % 2 ? '#c8506a' : '#8fb59a', hair: '#231c22' });
-    case 'farmer':  // 採藕人：斗笠、短褐、捲褲管
-      return cf({ cloth: 'kuzhe', hat: 'douli', hair: 'knot', bangs: 'short', rolled: true, beard: (seed | 0) % 2 ? '#3a3430' : null, beardS: 0.5,
-        fs: chFaceStyle({ male: true, eyeS: 0.86, blush: 0.45, iris: ['#2a1d18', '#7a5236'], brow: '#2e2420' }) },
-        { top: '#8a7a5a', pants: '#5a6b7c', sash: '#3a4a5c', trim: '#efe6d2', shoe: '#6b5a48', skin: '#efcfb2', hat: '#9a7a4a' });   // 斗笠比藕片深一階，疊在一起才分得開
-    case 'child':   // 宋代孩童：雙丫髻、短衫、短褲
+    case 'mengzi':  // 主角孟子：束髮小冠、黛青交領右衽寬袖深衣、淺色大帶、布履、短鬚、持竹簡
+      return cf({ cloth: 'robe', sleeve: 'wide', hair: 'knot', bangs: 'none', hat: 'xiaoguan', beard: '#2b2530', beardS: 0.55, prop: 'slips', daidai: true,
+        fs: M({ eyeS: 0.9, blush: 0.36 }) },
+        { top: '#3f5d6a', bottom: '#3f5d6a', trim: '#a0623a', sash: '#e6d8b8', crown: '#2b2622', shoe: '#4a3a2e' });
+    case 'shun':    // 舜：束髮、粗麻短衣、赤腳、扶耒耜
+      return cf({ cloth: 'kuzhe', hair: 'knot', bangs: 'short', rolled: true, pose: 'plough', beard: '#3a3430', beardS: 0.45, fs: M({ blush: 0.45 }) },
+        { top: '#c2ad84', pants: '#9a8a68', sash: '#6b5a48', trim: '#e8dcc0', shoe: '#efcfb2', skin: '#efcfb2' });
+    case 'fuyue':   // 傅說：短衣束腰、捲褲管、持夯杵
+      return cf({ cloth: 'kuzhe', hair: 'knot', bangs: 'short', rolled: true, pose: 'tamp', fs: M({ blush: 0.42, stern: true }) },
+        { top: '#9a8462', pants: '#6f6250', sash: '#3a3128', trim: '#e2d4b4', shoe: '#5a4636', skin: '#ecc9a8' });
+    case 'jiaoge':  // 膠鬲：販魚鹽的人，幅巾短衣、提魚簍
+      return cf({ cloth: 'kuzhe', hat: 'kerchief', hair: 'knot', bangs: 'short', prop: 'fishbasket', pose: 'basket', beard: '#3a3430', beardS: 0.5, fs: M({ blush: 0.4 }) },
+        { top: '#7d8c8a', pants: '#5c5a52', sash: '#a0623a', trim: '#e6dcc4', kerchief: '#5a5048', shoe: '#4a3e34' });
+    case 'guanzhong': // 管仲：被押的囚徒，衣服樸素、頸上木枷
+      return cf({ cloth: 'robe', hair: 'knot', bangs: 'short', prop: 'cangue', pose: 'bound', face: 'calm', beard: '#2b2530', beardS: 0.6, fs: M({ blush: 0.25, eyeS: 0.86 }) },
+        { top: '#a49b88', bottom: '#a49b88', trim: '#7d7464', sash: '#5a5048', shoe: '#5a4a3c' });
+    case 'sunshuao': // 孫叔敖：海濱隱居，斗笠布衣
+      return cf({ cloth: 'kuzhe', hat: 'douli', hair: 'knot', bangs: 'short', beard: '#2b2530', beardS: 0.55, fs: M({ blush: 0.38, eyeS: 0.86 }) },
+        { top: '#cdbf98', pants: '#8a8670', sash: '#4f6a6a', trim: '#f1e9d4', shoe: '#6b5a48', hat: '#a58858' });
+    case 'baili':   // 百里奚：市集中的老人，白髮白鬚、臂上搭羊皮
+      return cf({ cloth: 'robe', hair: 'knot', bangs: 'short', prop: 'sheepskin', pose: 'basket', beard: '#e8e2d6', beardLong: true, old: true, fs: chFaceStyle({ male: true, old: true, eyeS: 0.8, blush: 0.3, brow: '#d8d2c6' }) },
+        { top: '#8a7a62', bottom: '#8a7a62', trim: '#d9cdb0', sash: '#4a3e34', hair: '#dcd6cc', shoe: '#4a3e34' });
+    case 'craftsman': // 工匠：幅巾、短衣束腰、捲褲管
+      return cf({ cloth: 'kuzhe', hat: 'kerchief', hair: 'knot', bangs: 'short', rolled: sd % 2 === 0, beard: sd % 2 ? '#2b2530' : null, beardS: 0.5, fs: M({ blush: 0.45 }) },
+        Object.assign(sd % 2 ? { top: '#8a6a4a', pants: '#5f646a' } : { top: '#6f7d6a', pants: '#6a5a48' }, { sash: '#3a3128', trim: '#e6d9bc', kerchief: '#7a6248', shoe: '#4a3e34', skin: '#efcfb2' }));
+    case 'soldier': // 守城兵：束髮頭巾、短衣外罩皮甲、持戈（不是明清盔甲）
+      return cf({ cloth: 'kuzhe', hat: 'kerchief', hair: 'knot', bangs: 'short', armor: true, prop: 'ge', pose: 'spear', fs: M({ blush: 0.35, stern: true }) },
+        { top: '#8a3f32', pants: '#5a5048', sash: '#2b2622', trim: '#c9b48a', kerchief: '#6a2e26', armor: '#6b4a34', shoe: '#3a2e28' });
+    case 'minister': // 大臣：高冠、寬袖深衣、拱手
+      return cf({ cloth: 'robe', sleeve: 'wide', hair: 'knot', bangs: 'none', hat: 'gaoguan', beard: '#2b2530', beardS: 0.8, pose: 'bow', daidai: true, fs: M({ eyeS: 0.86, blush: 0.3 }) },
+        { top: '#6e3a32', bottom: '#6e3a32', trim: '#c9a75a', sash: '#d9c9a0', crown: '#231f1d', shoe: '#231f1d' });
+    case 'boatman': // 船夫：斗笠、短褐、捲褲管、撐竹篙
+      return cf({ cloth: 'kuzhe', hat: 'douli', hair: 'knot', bangs: 'short', rolled: true, prop: 'pole', pose: 'pole', beard: '#3a3430', beardS: 0.5, fs: M({ blush: 0.5 }) },
+        { top: '#7a6a52', pants: '#4f5a64', sash: '#a0623a', trim: '#e9dfc6', shoe: '#efcfb2', skin: '#e9c4a0', hat: '#b08f58' });
+    case 'scholar': // 戰國士人／學生：束髮幅巾、交領深衣（seed 換色）
     default:
-      return cf({ child: true, cloth: 'kuzhe', hair: 'yaji', bangs: 'short',
-        fs: chFaceStyle({ eyeS: 1.08, blush: 0.6, iris: ['#2c1b15', '#9a6a3c'], brow: '#3b2a24' }) },
-        { top: (seed | 0) % 2 ? '#8fb59a' : '#e3aebc', pants: '#f1e7d2', sash: '#c0392b', trim: '#f6ecda', hair: '#2b2530' });
+      return cf({ cloth: 'robe', hat: 'kerchief', hair: 'knot', bangs: 'short', fs: M({ eyeS: 0.92, blush: 0.45 }) },
+        Object.assign([{ top: '#6f8a72', trim: '#3f5a46' }, { top: '#9a7a5a', trim: '#5f4a34' }, { top: '#5f7488', trim: '#384a5c' }][sd % 3], { sash: '#2b2622', kerchief: '#3a3430', shoe: '#3a2e28' }, (o => ({ bottom: o.top }))([{ top: '#6f8a72' }, { top: '#9a7a5a' }, { top: '#5f7488' }][sd % 3])));
   }
 }
 
@@ -434,8 +452,8 @@ function chHairGeo(cf) {
   return chMerge([...list, ...g, ...add]);
 }
 
-// 帽：幅巾（kerchief）、綸巾（lunjin＝幅巾＋高起的巾頂）、襆頭（futou）、高冠（gaoguan）、小道冠（daoguan）
-const CH_CROWN = ['gaoguan', 'daoguan'];
+// 帽：小冠（xiaoguan，戰國束髮小冠）、幅巾（kerchief）、綸巾（lunjin＝幅巾＋高起的巾頂）、襆頭（futou）、高冠（gaoguan）、小道冠（daoguan）
+const CH_CROWN = ['gaoguan', 'daoguan', 'xiaoguan'];
 function chHatGeo(cf) {
   const L = [];
   if (cf.hat === 'kerchief' || cf.hat === 'lunjin') {
@@ -488,6 +506,13 @@ function chHatGeo(cf) {
     L.push(chPaint(chTf(new THREE.CylinderGeometry(0.36, 0.36, 0.06, 20), [0, 1.78, -0.23], [-0.22, 0, 0], [1, 1, 0.78]), hd));
     L.push(chPaint(chTf(new THREE.TorusGeometry(0.44, 0.05, 6, 24), [0, 0.88, -0.03], [Math.PI / 2 - 0.22, 0, 0], [1, 0.8, 1]), hd));
     L.push(chPaint(chTf(new THREE.CylinderGeometry(0.035, 0.035, 1.25, 6), [0, 1.08, -0.08], [0, 0, Math.PI / 2]), '#e0b13c'));
+  } else if (cf.hat === 'xiaoguan') {   // 戰國小冠：罩住頭頂髮髻的黑漆小冠＋前後一道冠梁＋橫笄＋兩條冠纓垂到下巴
+    const hc = cf.c.crown, hd = chCol(hc, '#000', 0.35).getStyle(), hl = chCol(hc, '#8a8fa8', 0.3).getStyle();
+    L.push(chPaint(chTf(new THREE.CylinderGeometry(0.27, 0.33, 0.36, 20), [0, 1.1, -0.12], [-0.12, 0, 0], [1, 1, 0.86]), (x, y) => new THREE.Color(y > 1.22 ? hl : hc)));
+    L.push(chPaint(chTf(new THREE.TorusGeometry(0.17, 0.06, 6, 20, Math.PI), [0, 1.27, -0.14], [0, Math.PI / 2, 0], [1, 0.9, 1]), hc));   // 冠梁：前後拱起
+    L.push(chPaint(chTf(new THREE.TorusGeometry(0.34, 0.035, 6, 24), [0, 0.93, -0.1], [Math.PI / 2 - 0.12, 0, 0], [1, 0.86, 1]), hd));
+    L.push(chPaint(chTf(new THREE.CylinderGeometry(0.03, 0.03, 0.95, 6), [0, 1.1, -0.1], [0, 0, Math.PI / 2]), '#d9c9a0'));          // 橫笄
+    for (const s of [-1, 1]) L.push(chRibbon([chV(s * 0.3, 0.94, -0.04), chV(s * 0.78, 0.4, 0.3), chV(s * 0.66, -0.3, 0.62), chV(s * 0.3, -0.72, 0.72)], { w: [0.05, 0.04], th: 0.015, seg: 10, m: 3, out: p => chV(p.x, 0, p.z).normalize(), col: hd }));
   } else if (cf.hat === 'daoguan') {   // 小道冠：髻上一頂木色小冠＋橫簪
     const hc = cf.c.crown;
     L.push(chPaint(chTf(new THREE.CylinderGeometry(0.28, 0.2, 0.3, 14), [0, 1.2, -0.14]), hc));
@@ -564,7 +589,7 @@ function chBuildBody(cf, key, R) {
   } else if (cf.cloth === 'robe') {
     const Tm = new THREE.Color(trim), B = new THREE.Color(C.bottom);
     add(R.lower, chPaint(chLathe(CH_ROBE, 36), (x, y) => (y < 0.055 ? Tm : B)), vc);
-    const belt = [chPaint(chTf(new THREE.TorusGeometry(0.168, 0.02, 8, 36), [0, 0.3, 0], [Math.PI / 2, 0, 0]), C.sash)];
+    const belt = [chPaint(chTf(new THREE.TorusGeometry(0.168, cf.daidai ? 0.03 : 0.02, 8, 36), [0, 0.3, 0], [Math.PI / 2, 0, 0], [1, 1, cf.daidai ? 1.5 : 1]), C.sash)];
     if (C.plate) for (let i = -3; i <= 3; i++) { const an = i * 26 * CH_D; belt.push(chPaint(chTf(new THREE.BoxGeometry(0.03, 0.028, 0.012), [0.178 * Math.sin(an), 0.3, 0.178 * Math.cos(an)], [0, an, 0]), C.plate)); }   // 革帶上的金銙
     if (C.panel) belt.push(chPaint(chTf(new THREE.BoxGeometry(0.15, 0.24, 0.012), [0, 0.18, 0.205], [-0.2, 0, 0]), (x, y) => new THREE.Color(Math.abs(x) > 0.06 || y < 0.075 ? C.sash : C.panel)));
     add(R.lower, chMerge(belt), vc);
@@ -576,6 +601,18 @@ function chBuildBody(cf, key, R) {
       chPaint(chTf(new THREE.BoxGeometry(0.05, 0.04, 0.02), [0, 0.27, 0.178]), '#c9a75a')];
     for (const s of [-1, 1]) belt.push(chRibbon([chV(s * 0.05, 0.262, 0.176), chV(s * 0.06, 0.2, 0.19), chV(s * 0.065, 0.15, 0.2)], { w: [0.022, 0.02], th: 0.006, seg: 6, m: 3, out: () => chV(0, 0, 1), col: C.sash }));
     add(R.lower, chMerge(belt), vc);
+  }
+  // 皮甲（守城兵）：胸腹一圈甲片（橫排甲札、深色編繩），只到腰
+  if (cf.armor) {
+    const A = chLathe(T.filter(p => p[1] <= 0.47).map(([r, y]) => [r ? r + 0.018 : r, y]).concat([[0.001, 0.47]]), 24), ac = new THREE.Color(C.armor), ad = chCol(C.armor, '#000', 0.35), cc = new THREE.Color();
+    chPaint(A, (x, y, z) => cc.copy(Math.abs(((y - 0.2) * 22) % 1) < 0.16 || Math.abs((Math.atan2(x, z) * 5) % 1) < 0.08 ? ad : ac));
+    add(R.torso, A, vc);
+  }
+  if (cf.daidai) {   // 大帶：腰間寬帶在前方打結、兩條帶尾（紳）垂到膝下
+    const tails = [];
+    for (const s of [-1, 1]) tails.push(chRibbon([chV(s * 0.03, 0.3, 0.19), chV(s * 0.05, 0.2, 0.215), chV(s * 0.06, 0.1, 0.225), chV(s * 0.065, 0.04, 0.215)], { w: [0.045, 0.04], th: 0.008, seg: 8, m: 3, out: () => chV(0, 0, 1), col: C.sash }));
+    tails.push(chPaint(chTf(new THREE.SphereGeometry(0.03, 8, 6), [0, 0.302, 0.19], [0, 0, 0], [1.4, 1, 0.7]), C.sash));
+    add(R.lower, chMerge(tails), vc);
   }
   // 手臂：袖子（袖口滾邊）
   const wide = cf.sleeve === 'wide';
@@ -604,7 +641,7 @@ function chBuildBody(cf, key, R) {
 }
 
 function lpChibi(spec = {}) {
-  const who = spec.who || 'zhou', seed = spec.seed || 0;
+  const who = spec.who || 'mengzi', seed = spec.seed || 0;
   const cf0 = chConfig(who, 'dress', seed, spec.colors), sc = spec.scale || 1;
   const root = new THREE.Group(); root.name = 'chibi-' + who;
   const ksc = sc * (cf0.child ? 0.82 : 1);   // 孩童小一號
@@ -632,7 +669,7 @@ function lpChibi(spec = {}) {
   const st = { pose: spec.pose || cf0.pose, face: spec.face || cf0.face, blink: false, phase: mulberry32((seed | 0) + who.length * 17)() * 10 };
   const vcMesh = g => { const m = new THREE.Mesh(g, CM('#ffffff', { vertexColors: true })); m.castShadow = true; return m; };
   // 小道具：用到才建。up＝道具保持直立（抵銷手臂前抬的角度）；hand＝掛在哪隻手
-  const inkLines = (x, y) => new THREE.Color(Math.abs(x) < 0.04 && Math.round(y * 160) % 3 === 0 ? '#3a3330' : '#f4ecda');
+  const inkLines = (x, y, z) => new THREE.Color(Math.abs(((x + 1) * 70) % 1) < 0.12 ? '#9a8452' : Math.abs(x) < 0.12 && Math.round(z * 160) % 3 === 0 ? '#3a3330' : '#e2d2a0');   // 攤開的竹簡：直條竹片＋墨字
   const PROPS = {
     scroll: { hand: 'L', up: true, make: () => chMerge([chPaint(new THREE.CylinderGeometry(0.03, 0.03, 0.22, 12).translate(0, 0.07, 0.035), (x, y) => new THREE.Color(Math.abs(y - 0.07) < 0.012 ? '#c0392b' : '#efe2c4')),   // 直握一卷書，中間一道朱繩
       chPaint(new THREE.CylinderGeometry(0.034, 0.034, 0.014, 12).translate(0, 0.18, 0.035), '#8a5a3a'), chPaint(new THREE.CylinderGeometry(0.034, 0.034, 0.014, 12).translate(0, -0.04, 0.035), '#8a5a3a')]) },
@@ -645,6 +682,32 @@ function lpChibi(spec = {}) {
       const mums = [[0.03, 0.03], [-0.04, 0.0], [0.0, -0.04], [0.045, -0.035]].map(([x, z]) => chPaint(new THREE.SphereGeometry(0.035, 8, 6).scale(1, 0.6, 1).translate(x, -0.055, 0.02 + z), '#e8b830'));
       return chMerge([body, bot, rim, handle, ...mums]); } },
     brush: { hand: 'R', up: true, make: () => chMerge([chPaint(new THREE.CylinderGeometry(0.008, 0.008, 0.15, 6).translate(0, 0.05, 0), '#8a5a3a'), chPaint(new THREE.ConeGeometry(0.014, 0.04, 8).rotateZ(Math.PI).translate(0, -0.04, 0), '#1f1b19')]) },
+    // 竹簡一卷：一捆竹片捲起（直條紋）、兩道編繩
+    slips: { hand: 'L', up: true, make: () => chMerge([chPaint(new THREE.CylinderGeometry(0.045, 0.045, 0.2, 16).translate(0, 0.06, 0.04), (x, y, z) => new THREE.Color(Math.abs(y - 0.0) < 0.008 || Math.abs(y - 0.12) < 0.008 ? '#6b4a2e' : Math.round(Math.atan2(x, z - 0.04) * 4.5) % 2 ? '#d8c58e' : '#c2ad74'))]) },
+    // 耒耜：木柄斜插地面、下端橫木踏腳、兩根木齒入土；掛在身體前方（不跟手臂轉）
+    plough: { hand: 'B', pos: [0.02, 0, 0.3], make: () => chMerge([chPaint(chTf(new THREE.CylinderGeometry(0.016, 0.02, 0.62, 6), [0, 0.32, 0.03], [-0.18, 0, 0]), '#8a6a44'),
+      chPaint(chTf(new THREE.CylinderGeometry(0.014, 0.014, 0.2, 6), [0, 0.6, -0.02], [0, 0, Math.PI / 2]), '#8a6a44'),
+      chPaint(chTf(new THREE.CylinderGeometry(0.012, 0.012, 0.14, 6), [0, 0.08, 0.1], [0, 0, Math.PI / 2]), '#7a5a38'),
+      ...[-1, 1].map(k => chPaint(chTf(new THREE.ConeGeometry(0.014, 0.12, 5), [k * 0.03, 0.062, 0.12], [Math.PI, 0, 0]), '#6b4a2e'))]) },
+    // 夯杵：粗木杵直立在身前，下端粗圓、上段兩側把手
+    pestle: { hand: 'B', pos: [0, 0.04, 0.24], make: () => chMerge([chPaint(new THREE.CylinderGeometry(0.02, 0.02, 0.62, 8).translate(0, 0.36, 0), '#9a7a50'),
+      chPaint(new THREE.CylinderGeometry(0.055, 0.06, 0.12, 12).translate(0, 0.06, 0), '#7a5a38'), chPaint(chTf(new THREE.CylinderGeometry(0.012, 0.012, 0.2, 6), [0, 0.5, 0], [0, 0, Math.PI / 2]), '#7a5a38')]) },
+    // 魚簍：竹編窄口簍，口上露兩條魚尾
+    fishbasket: { hand: 'L', up: true, make: () => { const W = new THREE.Color('#b89a5e'), Wd = new THREE.Color('#8a6c3e');
+      return chMerge([chPaint(chLathe([[0.001, -0.17], [0.06, -0.17], [0.085, -0.12], [0.08, -0.07], [0.055, -0.045], [0.001, -0.045]], 14).translate(0, 0, 0.02), (x, y, z) => ((Math.round(Math.atan2(x, z - 0.02) * 6) + Math.round(y * 50)) % 2 ? W : Wd)),
+        chPaint(new THREE.TorusGeometry(0.06, 0.008, 6, 14, Math.PI).translate(0, -0.05, 0.02), Wd.getStyle()),
+        ...[[-0.02, 0.4], [0.025, -0.3]].map(([x, r]) => chPaint(chTf(new THREE.ConeGeometry(0.03, 0.07, 4), [x, -0.02, 0.02], [0, 0, r], [1, 1, 0.3]), '#7a8a90'))]); } },
+    // 木枷：頸上一塊方木板（中間套頸），兩手在板下
+    cangue: { hand: 'N', make: () => chMerge([chPaint(new THREE.BoxGeometry(0.44, 0.04, 0.26), '#9a7a50'), chPaint(new THREE.BoxGeometry(0.44, 0.012, 0.012).translate(0, 0.024, 0), '#6b4a2e')]) },
+    // 戈：長木柲直立、頂端橫出青銅戈頭（朝前）
+    ge: { hand: 'R', up: true, make: () => chMerge([chPaint(new THREE.CylinderGeometry(0.012, 0.012, 1.2, 6).translate(0, 0.34, 0.0), '#6b4a2e'),
+      chPaint(chTf(new THREE.BoxGeometry(0.02, 0.035, 0.2), [0, 0.8, 0.09], [0.15, 0, 0]), '#8a8a6a'), chPaint(new THREE.ConeGeometry(0.018, 0.05, 6).translate(0, 0.9, 0), '#8a8a6a')]) },
+    // 竹篙：長竹竿從胸前斜向後下方伸進水裡（竹節一圈深色）；掛在身體上，scene／anim 讓它前後擺
+    pole: { hand: 'B', pos: [0.06, 0.42, 0.16], make: () => chPaint(chTf(new THREE.CylinderGeometry(0.014, 0.016, 2.6, 6, 13), [0, -0.95, -0.55], [-0.52, 0, 0]), (x, y) => new THREE.Color(Math.abs(((y + 3) * 5) % 1) < 0.08 ? '#6f7a3e' : '#a8a860')) },
+    // 羊皮：搭在左前臂上的一張捲邊羊皮
+    sheepskin: { hand: 'L', up: true, make: () => { const g = new THREE.SphereGeometry(1, 14, 10).scale(0.12, 0.13, 0.035), p = g.attributes.position;
+      for (let i = 0; i < p.count; i++) p.setZ(i, p.getZ(i) + 0.04 * Math.sin(p.getY(i) * 30) * 0.4);
+      g.computeVertexNormals(); return chMerge([chPaint(g.translate(0, -0.05, 0.06), (x, y) => new THREE.Color(Math.sin(x * 90) * Math.sin(y * 80) > 0.5 ? '#d9cdb4' : '#ece4d0'))]); } },
     book: { hand: 'T', make: () => { const sheet = chPaint(new THREE.BoxGeometry(0.3, 0.006, 0.15, 30, 1, 6), inkLines);
       return chMerge([sheet, chPaint(new THREE.CylinderGeometry(0.018, 0.018, 0.17, 10).rotateX(Math.PI / 2).translate(-0.155, 0, 0), '#8a5a3a'), chPaint(new THREE.CylinderGeometry(0.018, 0.018, 0.17, 10).rotateX(Math.PI / 2).translate(0.155, 0, 0), '#8a5a3a')]); } }
   };
@@ -652,6 +715,8 @@ function lpChibi(spec = {}) {
     if (R.props[k]) return R.props[k];
     const d = PROPS[k], m = vcMesh(d.make());
     if (d.hand === 'T') { m.position.set(0, 0.34, 0.24); m.rotation.x = 0.75; R.torso.add(m); }   // 捧在胸前、往臉斜
+    else if (d.hand === 'B') { m.position.set(...d.pos); rig.add(m); m.userData.base = d.pos.slice(); }   // 長道具掛在身體上，不跟手臂轉
+    else if (d.hand === 'N') { m.position.set(0, 0.47, 0.02); R.torso.add(m); }   // 木枷套在頸上
     else { m.position.y = -0.2; (d.hand === 'L' ? R.armL : R.armR).add(m); }
     m.userData.up = !!d.up; m.userData.prop = k; return (R.props[k] = m);
   }
@@ -671,16 +736,25 @@ function lpChibi(spec = {}) {
     write: { L: [-0.75, -0.05], R: [-1.0, 0.12], leg: [-1.35, 0.42], lean: 0.08, nod: 0.18 },
     basket: { L: [0.02, 0.3], R: [0.04, -0.24] },                         // 左手提竹籃
     pick: { L: [0.04, 0.24], R: [-1.2, -0.12], lean: 0.16, nod: 0.18 },   // 右手往前下方摘花
-    reach: { L: [-0.3, 0.35], R: [-2.0, -0.12], nod: -0.12 }               // 右手往前上方伸
+    reach: { L: [-0.3, 0.35], R: [-2.0, -0.12], nod: -0.12 },              // 右手往前上方伸
+    plough: { L: [-0.95, -0.12], R: [-0.95, 0.12], lean: 0.2, nod: 0.12 },   // 雙手往前下方扶耒、身體前傾
+    tamp: { L: [-1.35, -0.32], R: [-1.35, 0.32], nod: 0.06 },               // 雙手握夯杵上段
+    carry: { L: [-1.05, -0.12], R: [-1.05, 0.12], lean: 0.04 },             // 雙手往前伸、腰高托住合抬的木料（木料在 z+0.2、y 0.33）
+    bound: { L: [-0.75, -0.45], R: [-0.75, 0.45], nod: 0.14 },               // 雙手在木枷下
+    talk: { L: [0.04, 0.24], R: [-0.95, -0.35], nod: -0.04 },                // 右手前伸比手勢
+    spear: { L: [0.04, 0.24], R: [-0.45, -0.1] },                            // 右手持戈直立
+    pole: { L: [-1.0, -0.1], R: [-0.75, 0.2], lean: 0.12 }                   // 雙手握篙、身體前傾使力
   };
-  const POSE_PROP = { read: 'book', write: 'brush', basket: 'basket', bow: null, reach: null };
+  const POSE_PROP = { read: 'book', write: 'brush', basket: cf0.prop === 'fishbasket' || cf0.prop === 'sheepskin' ? cf0.prop : 'basket', bow: null, reach: null, carry: null, hold: null,
+    plough: null, tamp: null, spear: 'ge', pole: 'pole', bound: 'cangue', talk: cf0.prop === 'slips' ? 'slips' : null };
   function applyPose() {
-    const P = POSES[st.pose] || POSES.stand, lg = P.leg || [0, 0], spread = cf0.cloth === 'kuzhe' ? 1 : 0.2;
+    // carry：工匠＝雙手前伸合抬木料（B 站 4）；其他人＝雙手握胸前背帶背行囊（A 站 3，包袱 A 自備）
+    const P = st.pose === 'carry' && who !== 'craftsman' ? { L: [-0.55, -0.42], R: [-0.55, 0.42] } : POSES[st.pose] || POSES.stand, lg = P.leg || [0, 0], spread = cf0.cloth === 'kuzhe' ? 1 : 0.2;
     R.armL.rotation.set(P.L[0], 0, P.L[1]); R.armR.rotation.set(P.R[0], 0, P.R[1]);
     R.legL.rotation.set(lg[0] * (spread < 1 ? 0.4 : 1), 0, lg[1] * spread); R.legR.rotation.set(lg[0] * (spread < 1 ? 0.4 : 1), 0, -lg[1] * spread);
     R.pivot.rotation.x = P.lean || 0; R.head.rotation.x = P.nod || 0;
     const show = st.pose in POSE_PROP ? POSE_PROP[st.pose] : cf0.prop;
-    if (st.pose === 'stand' && (show === 'scroll' || show === 'paper')) R.armL.rotation.set(-0.95, 0, -0.12);   // 站著時把書卷／詩稿捧在胸前，正面看得到
+    if ((st.pose === 'stand' || st.pose === 'talk') && (show === 'scroll' || show === 'paper' || show === 'slips')) R.armL.rotation.set(-0.95, 0, -0.12);   // 站著時把書卷／詩稿捧在胸前，正面看得到
     for (const k of new Set([show, ...Object.keys(R.props)])) if (k) prop(k).visible = k === show;
     st.base = { L: R.armL.rotation.clone(), R: R.armR.rotation.clone(), lean: R.pivot.rotation.x };
     rig.position.y = 0;
@@ -717,6 +791,15 @@ function lpChibi(spec = {}) {
       case 'pick': R.armR.rotation.x = b.R.x + 0.05 * Math.sin(t * 2 + ph); break;
       case 'write': R.armR.rotation.z = b.R.z + 0.08 * Math.sin(t * 5 + ph); R.armR.rotation.x = b.R.x + 0.04 * Math.sin(t * 3.3); break;
       case 'read': R.head.rotation.x = 0.16 + 0.03 * Math.sin(t * 0.7 + ph); break;
+      case 'plough': { const k = Math.sin(t * 2 + ph); R.pivot.rotation.x = b.lean + 0.04 * k; R.armL.rotation.x = b.L.x + 0.06 * k; R.armR.rotation.x = b.R.x + 0.06 * k; break; }
+      case 'tamp': { const k = Math.max(0, Math.sin(t * 3.2 + ph)), pr = R.props.pestle;   // 舉起夯杵→落下
+        R.armL.rotation.x = b.L.x - 0.35 * k; R.armR.rotation.x = b.R.x - 0.35 * k; if (pr) pr.position.y = pr.userData.base[1] + 0.12 * k; rig.position.y = 0.006 * k; break; }
+      case 'carry': rig.position.y = 0.006 * Math.abs(Math.sin(t * 2.4 + ph)); break;
+      case 'talk': R.armR.rotation.z = b.R.z + 0.18 * Math.sin(t * 2.6 + ph); R.head.rotation.x = -0.04 + 0.05 * Math.sin(t * 1.3 + ph); break;
+      case 'bound': R.head.rotation.x = 0.14 + 0.03 * Math.sin(t * 0.6 + ph); break;
+      case 'pole': { const k = Math.sin(t * (st.poleRate || 3) + ph), pr = R.props.pole;   // 撐篙：身體前傾推、回收
+        R.pivot.rotation.x = b.lean + 0.12 * k; R.armL.rotation.x = b.L.x + 0.2 * k; R.armR.rotation.x = b.R.x + 0.2 * k;
+        if (pr) { pr.rotation.x = 0.12 * k; pr.position.z = pr.userData.base[2] + 0.05 * k; } break; }
     }
     upright();
   }
@@ -724,6 +807,7 @@ function lpChibi(spec = {}) {
     spec, who, seatY: CH_HIP * ksc, anim,
     setOutfit() {},   // 本作一人一套衣服；保留介面
     setPose(p) { st.pose = POSES[p] ? p : 'stand'; applyPose(); },
+    setPoleRate(r) { st.poleRate = r; },   // 撐篙節奏（scene：航行時快、靠岸慢）
     setFace(f) { st.face = ['smile', 'sad', 'surprised', 'worried', 'calm'].includes(f) ? f : 'smile'; applyFace(); }
   });
   return root;
