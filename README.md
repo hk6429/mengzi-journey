@@ -15,3 +15,5 @@
 本機產出的個人聲音 MP3 與暫存資料不納入公開儲存庫；未提供預錄檔時使用裝置語音。`tools/gen-voice.mjs` 需本機已設定的 VoxCPM 工具，不會下載或設定聲音身分。
 
 `node scripts/check-voice-files.mjs` 核對 36 段預錄檔與目前文字、讀音版本、解碼及音量；`node scripts/check-voice-browser.mjs` 檢查瀏覽器載入。兩者需本機已有預錄檔及 ffmpeg／ffprobe。抽聽頁為 `/audio-review.html`；檔案檢查不能代替人工聽讀。
+
+`node scripts/check-cert-image.mjs` 在真實 3D 場景產生六張證書圖片，檢查兩版 A4 證書、成績與姓名保留及重開可領；樣張寫入 `review/certificates/`。截圖只更新圖片紀錄，不變更學生進度。

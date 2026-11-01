@@ -79,7 +79,7 @@ export function createScene(container) {
   group=groups[0];
   const fallback=new THREE.Group();const body=new THREE.Mesh(new THREE.ConeGeometry(.55,1.6,12),material('#535e67'));body.position.y=.8;fallback.add(body);const head=new THREE.Mesh(new THREE.SphereGeometry(.32,16,12),material('#d1a77f'));head.position.y=1.75;fallback.add(head);
   const walker=new THREE.Group();walker.add(fallback);scene.add(walker);walker.position.set(0,0,2);
-  new GLTFLoader().load('./models/mengzi-normal.glb',g=>{hero=g.scene;const bounds=new THREE.Box3().setFromObject(hero);const size=bounds.getSize(new THREE.Vector3());if(!size.y)return;hero.scale.setScalar(2/size.y);bounds.setFromObject(hero);const center=bounds.getCenter(new THREE.Vector3());hero.position.set(-center.x,-bounds.min.y,-center.z);walker.add(hero);walker.remove(fallback)},undefined,()=>{console.warn('孟子模型載入失敗，使用備用人物。')});
+  const heroReady=new Promise(resolve=>new GLTFLoader().load('./models/mengzi-normal.glb',g=>{hero=g.scene;const bounds=new THREE.Box3().setFromObject(hero);const size=bounds.getSize(new THREE.Vector3());if(!size.y){resolve();return}hero.scale.setScalar(2/size.y);bounds.setFromObject(hero);const center=bounds.getCenter(new THREE.Vector3());hero.position.set(-center.x,-bounds.min.y,-center.z);walker.add(hero);walker.remove(fallback);resolve()},undefined,()=>{console.warn('孟子模型載入失敗，使用備用人物。');resolve()}));
   const boat=createBoat(THREE);scene.add(boat);boat.position.set(0,-.2,9);
   let journey=null; const travel={from:0,to:0,arrivals:0};
   function setStation(i){
@@ -123,5 +123,14 @@ export function createScene(container) {
       }
     }else{walker.position.x+=(heroDestination.x-walker.position.x)*.035;walker.position.z+=(heroDestination.z-walker.position.z)*.035}
     const before=controls.target.clone();controls.target.lerp(targetPoint,.045);camera.position.add(controls.target.clone().sub(before));const offset=camera.position.clone().sub(controls.target);const distance=offset.length();if(distance&&desiredDistance!==null){camera.position.copy(controls.target).add(offset.multiplyScalar((distance+(desiredDistance-distance)*.025)/distance));if(Math.abs(distance-desiredDistance)<.05)desiredDistance=null}controls.update();renderer.render(scene,camera)
-  });setStation(0);return {setStation,focus,overview,travelTo,skipTravel:finishTravel,riverInspect(){return {scene,camera,islands,river:water,bridges,boat,character:walker,travel}},capture(){renderer.render(scene,camera);const source=renderer.domElement;if(!source.width||!source.height)return null;const image=document.createElement('canvas');image.width=320;image.height=200;const ctx=image.getContext('2d');ctx.drawImage(source,0,0,image.width,image.height);return image.toDataURL('image/jpeg',.72)}};
+  });
+  function capture(index){
+    const size=renderer.getSize(new THREE.Vector2()),view=camera.clone(),position=walker.position.clone(),boatPosition=boat.position.clone(),boatRotation=boat.rotation.clone(),labels=islandNames.map(o=>o.visible);
+    try{
+      if(Number.isInteger(index)&&centers[index]){view.position.copy(centers[index]).add(new THREE.Vector3(9,10,15));view.lookAt(centers[index].clone().add(new THREE.Vector3(0,1,0)));walker.position.copy(centers[index]).add(new THREE.Vector3(0,0,2));boat.position.copy(centers[index]).add(new THREE.Vector3(0,-.2,9));boat.rotation.y=0}
+      islandNames.forEach(o=>o.visible=false);view.aspect=520/245;view.updateProjectionMatrix();renderer.setSize(520,245,false);renderer.render(scene,view);
+      const image=document.createElement('canvas');image.width=520;image.height=245;image.getContext('2d').drawImage(renderer.domElement,0,0,520,245);return image.toDataURL('image/jpeg',.85);
+    }finally{walker.position.copy(position);boat.position.copy(boatPosition);boat.rotation.copy(boatRotation);islandNames.forEach((o,i)=>o.visible=labels[i]);renderer.setSize(size.x,size.y,false);renderer.render(scene,camera)}
+  }
+  setStation(0);return {setStation,focus,overview,travelTo,skipTravel:finishTravel,ready:Promise.all([heroReady,hallAsset,slipsAsset,earthAsset]),capture,riverInspect(){return {scene,camera,islands,river:water,bridges,boat,character:walker,travel}}};
 }
