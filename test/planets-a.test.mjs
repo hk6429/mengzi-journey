@@ -15,10 +15,10 @@ vm.runInContext(['src/core.js', 'src/data.js', 'parts/chibi.js', 'parts/planets-
   '\nTHREE = __T; BGU = __B;\nglobalThis.R = { LP_BUILD, DATA, lpKit };', sb);
 const { LP_BUILD, DATA, lpKit } = sb.R;
 
-const R_MAX = 4.6;            // 荷葉半徑 5.4，A/B 的東西放在 4.6 內
-const HERO = [0, 2.6], HERO_R = 0.7;   // 主角周敦頤預設站位與淨空半徑
+const R_MAX = 4.6;            // 崖島平台半徑 5，A/B 的東西放在 4.6 內
+const HERO = [0, 2.6], HERO_R = 0.7;   // 主角孟子預設站位與淨空半徑
 const OWN_MAX = 220;          // 自建 mesh 上限（不含 chibi）
-const NOTCH_W = 10, NOTCH_R = 2.2;     // 缺口方向 ±10°、半徑 2.2 以外不能有東西
+const DOCK_W = 8, DOCK_R = 4.3;       // 碼頭方向 ±8°、半徑 4.3 以外留給 C 的木碼頭與石階
 
 // 走訪所有頂點（世界座標，含 InstancedMesh 每個實例）
 function eachVertex(g, fn) {
@@ -39,7 +39,7 @@ const build = (id, extra = {}) => {
   return { d, kit, g };
 };
 
-for (const id of ['baihua', 'ju', 'mudan', 'yuni']) {
+for (const id of ['fields', 'market', 'road']) {
   test(`站 ${id}：建出完整一站`, () => {
     assert.equal(typeof LP_BUILD[id], 'function');
     const { d, g } = build(id);
@@ -86,14 +86,16 @@ for (const id of ['baihua', 'ju', 'mudan', 'yuni']) {
     console.log(`${id}: 自建 ${own} mesh（含 fallback）、人物 ${chibis} 個、最遠 r=${far.toFixed(2)}`);
   });
 
-  test(`站 ${id}：荷葉缺口與配角朝向`, () => {
+  test(`站 ${id}：碼頭方向與配角朝向`, () => {
     const { g } = build(id);
-    const n = g.userData.notch;
-    assert.equal(typeof n, 'number', `${id} 有 userData.notch`);
-    assert.ok(Math.cos(n * Math.PI / 180) <= 0, `${id} 缺口 ${n}° 在 z<0 側後方（不對 +z 鏡頭）`);
+    const n = g.userData.dock;
+    assert.equal(typeof n, 'number', `${id} 有 userData.dock`);
+    assert.ok(Math.cos(n * Math.PI / 180) < 0.7, `${id} 碼頭 ${n}° 不在正前方 ±45° 擋鏡頭`);
+    assert.ok(!(g.userData.rim || []).some(a => Math.abs((((a - n) % 360) + 540) % 360 - 180) < 20), `${id} rim 避開碼頭`);
     eachVertex(g, v => {
+      if (v.y < 0.05) return;
       const r = Math.hypot(v.x, v.z), a = Math.atan2(v.x, v.z) * 180 / Math.PI, da = Math.abs((((a - n) % 360) + 540) % 360 - 180);
-      if (r > NOTCH_R && da < NOTCH_W) assert.fail(`${id} 缺口 ${n}° 內有東西：(${v.x.toFixed(2)}, ${v.y.toFixed(2)}, ${v.z.toFixed(2)})`);
+      if (r > DOCK_R && da < DOCK_W) assert.fail(`${id} 碼頭 ${n}° 口有東西：(${v.x.toFixed(2)}, ${v.y.toFixed(2)}, ${v.z.toFixed(2)})`);
     });
     // 配角臉朝 +z 鏡頭（cos ≥ 0.5）
     g.traverse(o => {
