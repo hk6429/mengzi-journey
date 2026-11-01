@@ -4,6 +4,146 @@
     "fields-y": {
       "hash": "668d01e458f12ee0bf9e3d82097a41c8ab3992eae9503563e1853d67302d1577",
       "speed": 1.1
+    },
+    "fields-1": {
+      "hash": "0abbdcce0ed6de33f045591c0b066670f31b91e4253656fb7967320d1783738a",
+      "speed": 1.25
+    },
+    "fields-2": {
+      "hash": "0ec3a872fddbb0aac2be5edbac347b75b804b8256000a0621112c9aa599bea15",
+      "speed": 1.25
+    },
+    "fields-3": {
+      "hash": "974cc984de4ef35140be5321a8c3708c46100d84c9e59d2cf705f20040acf13e",
+      "speed": 1.25
+    },
+    "fields-4": {
+      "hash": "e1915471e6fb35b1fd3c5923032f649acf6c6faf218bce3f2e01bf676fc2a5fc",
+      "speed": 1.25
+    },
+    "fields-5": {
+      "hash": "634d2d97afc411cface26194b4122ea38b0dfbb18eeb7b430f1dc08f5b04058a",
+      "speed": 1.25
+    },
+    "market-y": {
+      "hash": "42bf17ed5d70b1121d0c7bf753c77b829f96c829be0c6d13d72e58ffc910f463",
+      "speed": 1.1
+    },
+    "market-1": {
+      "hash": "2db89dea7a669d5344127c6ffaf0cf28ae23c51d828c70d6992aaf181e086819",
+      "speed": 1.25
+    },
+    "market-2": {
+      "hash": "b89854a2cc2167adf74bb54904f885dfff009befdf6e9772c9c8b3c7696e4eb3",
+      "speed": 1.25
+    },
+    "market-3": {
+      "hash": "e73e3791a80592f322199b3854c9bedaedf02d4340f4fe3260feb3db287db3ff",
+      "speed": 1.25
+    },
+    "market-4": {
+      "hash": "3928adec0eb7613cda28796a22b7094f838e7692212e5c90ef82044089f1d118",
+      "speed": 1.25
+    },
+    "market-5": {
+      "hash": "8d2ff3dfde2427a160d98fdc3ce8871a125d522879f64d83af85b397804cfb13",
+      "speed": 1.25
+    },
+    "road-y": {
+      "hash": "adf5b9295fbddbc355e5b28a596190cbbf8b39a9729aae26d5b083c21a4a5894",
+      "speed": 1.1
+    },
+    "road-1": {
+      "hash": "15ed54b0d583d137920db92081c3db59cbd2e26658469ab04ae7e7c3479c7d3a",
+      "speed": 1.25
+    },
+    "road-2": {
+      "hash": "eb329b588051c106e2c544527c8313b693959c16314fe71f2f99a9298eeef6d7",
+      "speed": 1.25
+    },
+    "road-3": {
+      "hash": "685777704bcb605ba4a839029b1025dd396b4c10f25fde4f59b566aa91a45aea",
+      "speed": 1.25
+    },
+    "road-4": {
+      "hash": "7ff4d14379fa7498186d2358b00d618299aa472a6a791274d5863fb558f242d5",
+      "speed": 1.25
+    },
+    "road-5": {
+      "hash": "1e3cf1413a58cd14f520d10c5e29da99c2e3b90f4eca266b206251d7cf9bfb0a",
+      "speed": 1.25
+    },
+    "bridge-y": {
+      "hash": "83c90a7f1cda66ba9d3b7c7b29abc812402710ccfb18be8218c5173b56c18b12",
+      "speed": 1.1
+    },
+    "bridge-1": {
+      "hash": "25826dea3f096d25199c14cd63847d22f6209b71f42ca8f9d5badb98ddc736db",
+      "speed": 1.25
+    },
+    "bridge-2": {
+      "hash": "facc9ebbbc375936655c3783a81af89a27df16b6c2484ff59a7946a099a05460",
+      "speed": 1.25
+    },
+    "bridge-3": {
+      "hash": "b5ff8364e0a6d353eb74d4c1a74745ae68a05ab02192e333ef19cf8e8e853d0a",
+      "speed": 1.25
+    },
+    "bridge-4": {
+      "hash": "cd007f37b0f3f8cd4217eb8a38071c4d27ac72704cde9f85e13183cd13fbbca2",
+      "speed": 1.25
+    },
+    "bridge-5": {
+      "hash": "d84b60eba16794db5fe68797073824b4d49cc2ba85d14da2be139ed78712177f",
+      "speed": 1.25
+    },
+    "study-y": {
+      "hash": "dc3ec6f48de26f9f6853b8f46735694199f97d688b60f63552f09ee8234922ac",
+      "speed": 1.1
+    },
+    "study-1": {
+      "hash": "76789ba2b0607d9f6b60da1dd74b995086dafb0678e0437234699e7046a46dd0",
+      "speed": 1.25
+    },
+    "study-2": {
+      "hash": "e111494de0f382a1d441768525eb0e105acb5c8da63069250ba9e5f109202392",
+      "speed": 1.25
+    },
+    "study-3": {
+      "hash": "e1d1da52e0b74c0e7c0a0ae6a6c5c0d7a13b6b828182f3fbe6bf508b46def35a",
+      "speed": 1.25
+    },
+    "study-4": {
+      "hash": "76f7ae2be4c181521072c364507483f5a4917fdff4add8731e0a88894d3ed9f5",
+      "speed": 1.25
+    },
+    "study-5": {
+      "hash": "d595d9fc4f607323fb5d7d68664c7d2820e7c0aa3334abd00b6d122d3c90e735",
+      "speed": 1.25
+    },
+    "city-y": {
+      "hash": "3a0c1602ee06e0d7e9c45913736095465b79780a266a89871b8225403a5d1776",
+      "speed": 1.1
+    },
+    "city-1": {
+      "hash": "c9a2a4c819f6da695e2cf4d24fa28298b582e972b63203e99d0cf612919a61b3",
+      "speed": 1.25
+    },
+    "city-2": {
+      "hash": "05d3d4896513fa99d6c042cd804d37099df0af05bce8de2376e6a8b812ef6589",
+      "speed": 1.25
+    },
+    "city-3": {
+      "hash": "1239741fe725df19aa1e3eb2ef81608eb35e125eafc6263166c11e4b6a485608",
+      "speed": 1.25
+    },
+    "city-4": {
+      "hash": "5303234e7fba7b7f17449a9887ea7abd866d21b532354d7b12fae84a324be9c5",
+      "speed": 1.25
+    },
+    "city-5": {
+      "hash": "1302203f61d34aa2272f9ba72e0943df7a5aaba616cf553b85b568e233bfceaa",
+      "speed": 1.25
     }
   }
 }

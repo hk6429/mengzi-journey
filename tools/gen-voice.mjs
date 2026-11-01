@@ -6,8 +6,7 @@ import {resolve} from 'node:path';
 const args=process.argv.slice(2);if(args.includes('--help')){console.log('node tools/gen-voice.mjs [--limit N]：產生古文及白話的本機 VoxCPM 語音');process.exit(0)}
 const i=args.indexOf('--limit'),limit=i<0?Infinity:Number(args[i+1]);if(!(limit>0))throw new Error('--limit 必須是正數');
 const dir=resolve('public/voice'),work=resolve('review/voice-work');await mkdir(dir,{recursive:true});await mkdir(work,{recursive:true});
-const fixes=[['傅說','傅悅'],['膠鬲','膠格'],['拂士','弼士'],['行拂','行弼'],['畎畝','犬畝'],['曾益','增益']];
-const speak=text=>fixes.reduce((s,[from,to])=>s.replaceAll(from,to),text);
+import {speak} from './voice-text.mjs';
 const jobs=stations.flatMap(s=>[{id:`${s.id}-y`,text:s.yuan,speed:1.1},...s.story.map((text,n)=>({id:`${s.id}-${n+1}`,text,speed:1.25}))]).map(j=>({...j,say:speak(j.text)}));
 const file=resolve(dir,'manifest.json');let manifest={voice:'opuscar-tts-voxcpm',files:{}};try{manifest=JSON.parse(await readFile(file,'utf8'))}catch{}
 const hash=j=>createHash('sha256').update(JSON.stringify([j.say,j.speed,'opuscar-tts-voxcpm'])).digest('hex');

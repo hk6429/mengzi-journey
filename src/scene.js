@@ -42,6 +42,13 @@ export function createScene(container) {
   const material=c=>new THREE.MeshStandardMaterial({color:c,roughness:.9});
   const hallAsset=new Promise(resolve=>new GLTFLoader().load('./models/warring-hall.glb',g=>resolve(g.scene),undefined,()=>resolve(null)));
   const slipsAsset=new Promise(resolve=>new GLTFLoader().load('./models/bamboo-slips.glb',g=>resolve(g.scene),undefined,()=>resolve(null)));
+  const earthAsset=new Promise(resolve=>new GLTFLoader().load('./models/rammed-earth.glb',g=>resolve(g.scene),undefined,()=>resolve(null)));
+  function earthwork(x,z){
+    const owner=group,fallback=[];
+    for(let n=0;n<4;n++)fallback.push(box(x,n*.34,z,1.8,.3,.55,'#ba9771'));
+    for(const offset of [-1.05,1.05])fallback.push(box(x+offset,0,z,.15,1.6,.75,'#73513d'));
+    earthAsset.then(model=>{if(!model)return;const instance=model.clone(true);let bounds=new THREE.Box3().setFromObject(instance);const height=bounds.getSize(new THREE.Vector3()).y;if(!height)return;instance.scale.setScalar(2/height);bounds.setFromObject(instance);const center=bounds.getCenter(new THREE.Vector3());instance.position.set(x-center.x,-bounds.min.y,z-center.z);instance.userData.asset='rammed-earth';owner.add(instance);fallback.forEach(o=>{owner.remove(o);o.geometry.dispose();o.material.dispose()})});
+  }
   function slips(x,y,z,width){
     const owner=group,fallback=[];
     for(let n=0;n<6;n++)fallback.push(box(x-width/2+n*width/6,y,z,width/7,.035,.55,'#d2bb87'));
@@ -60,7 +67,7 @@ export function createScene(container) {
   function addLabel(item){const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;const ctx=canvas.getContext('2d');ctx.fillStyle='#fff5df';ctx.fillRect(4,4,504,120);ctx.strokeStyle='#a57c49';ctx.lineWidth=5;ctx.strokeRect(5,5,502,118);ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#693c31';ctx.font='bold 52px serif';ctx.fillText(item.name,256,64);const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(canvas),depthTest:false}));sprite.scale.set(2.1,.52,1);sprite.position.set(item.x,2.6,item.z);sprite.userData.landmark=item.id;group.add(sprite)}
   function person(x,z,color){const p=new THREE.Group();const robe=new THREE.Mesh(new THREE.ConeGeometry(.42,1.25,12),material(color));robe.position.y=.63;p.add(robe);const head=new THREE.Mesh(new THREE.SphereGeometry(.25,12,8),material('#d6ad89'));head.position.y=1.47;p.add(head);const hair=new THREE.Mesh(new THREE.SphereGeometry(.16,10,8),material('#383532'));hair.position.y=1.68;p.add(hair);p.position.set(x,0,z);group.add(p)}
   function build(i){group=new THREE.Group();group.position.copy(centers[i]);scene.add(group);groups.push(group);tree(-4,-3);tree(4,-3);tree(-5,2);
-    if(i===0){for(let n=0;n<5;n++){box(-2.5+n*.55,0,0,.26,.12,4,'#72583a');for(let k=0;k<5;k++)box(-2.5+n*.55,.12,-1.7+k*.75,.12,.27,.12,'#7c9b5d')}for(let n=0;n<4;n++)box(2.5,n*.34,-2,1.8,.3,.55,'#ba9771');for(const x of [1.45,3.55])box(x,0,-2,.15,1.6,.75,'#73513d');person(-3.2,-1,'#a27d56');person(3.5,-1,'#74675d')}
+    if(i===0){for(let n=0;n<5;n++){box(-2.5+n*.55,0,0,.26,.12,4,'#72583a');for(let k=0;k<5;k++)box(-2.5+n*.55,.12,-1.7+k*.75,.12,.27,.12,'#7c9b5d')}earthwork(2.5,-2);person(-3.2,-1,'#a27d56');person(3.5,-1,'#74675d')}
     if(i===1){building(.3,-3);for(let n=0;n<3;n++){box(-3+n*1.1,0,0,.85,.7,.8,'#855d3e');box(-3+n*1.1,.7,0,1,.1,1,'#bd9270');box(-3+n*1.1,.82,0,.5,.14,.4,n===1?'#f1e7cc':'#819fa0')}box(3,0,-1,2,.04,3,'#7babb0');for(let n=0;n<4;n++)box(.1+n*.45,0,-1.5,.09,1.4,.09,'#594337');person(-3.8,-1,'#7b6a56');person(.1,-1,'#77695e')}
     if(i===2){box(2,0,-1,.7,1,.45,'#926f4c');box(2,1,-1,.8,.16,.5,'#694a32');for(let n=0;n<6;n++){const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.45+n*.08),material('#8c8274'));rock.position.set(-3+n*1.15,.35,-1+n*.3);group.add(rock)}}
     if(i===3){box(-.25,0,0,6,.04,2.5,'#7babb0');for(let n=0;n<6;n++)box(-2.5+n*.9,.2,0,.78,.16,1.8,'#926a45');box(2,0,-2,1.8,.8,1.2,'#785641');for(let n=0;n<5;n++)box(1.4+n*.27,.8,-2,.18,.06,.7,'#dbc392')}

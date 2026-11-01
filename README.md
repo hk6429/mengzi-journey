@@ -12,4 +12,6 @@
 
 `npm test` 檢查資料與模型。建置及啟動本機服務後，`node scripts/check-river.mjs` 檢查實際 3D 渡河；`node scripts/check-scene-views.mjs --shots` 檢查手機、桌機特寫與角色邊界，截圖寫入 `review/scenes/`。這兩項以有視窗的 Chromium 執行，需圖形環境。
 
-產製中的個人聲音 MP3 與暫存資料不納入公開儲存庫；未提供預錄檔時使用裝置語音。`tools/gen-voice.mjs` 需本機已設定的 VoxCPM 工具，不會下載或設定聲音身分。
+本機產出的個人聲音 MP3 與暫存資料不納入公開儲存庫；未提供預錄檔時使用裝置語音。`tools/gen-voice.mjs` 需本機已設定的 VoxCPM 工具，不會下載或設定聲音身分。
+
+`node scripts/check-voice-files.mjs` 核對 36 段預錄檔與目前文字、讀音版本、解碼及音量；`node scripts/check-voice-browser.mjs` 檢查瀏覽器載入。兩者需本機已有預錄檔及 ffmpeg／ffprobe。抽聽頁為 `/audio-review.html`；檔案檢查不能代替人工聽讀。
