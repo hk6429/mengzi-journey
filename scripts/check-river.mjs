@@ -28,6 +28,7 @@ async function inspect(page){
     const pos=o=>o.getWorldPosition(new THREE.Vector3()).toArray();
     return {
       validScene:!!data.scene?.isScene,
+      settlements:data.scene.getObjectByName('warring-backdrop')?.children.filter(o=>o.name==='riverbank-settlement').length,
       islands:data.islands.map(i=>({index:i.index,rendered:rendered(i.object),dock:attached(i.dock),position:pos(i.object),dockPosition:pos(i.dock)})),
       river:rendered(data.river),riverBox:new THREE.Box3().setFromObject(data.river).toArray?.() ?? (()=>{const b=new THREE.Box3().setFromObject(data.river);return [b.min.toArray(),b.max.toArray()]})(),
       bridges:data.bridges.map(rendered),boat:rendered(data.boat),character:rendered(data.character),
@@ -42,6 +43,7 @@ try{
   const initial=await inspect(page);
   assert.ok(initial.validScene&&initial.river&&initial.boat&&initial.character,'河道、船與孟子須為附屬實景且有可見網格');
   assert.equal(initial.islands.length,6,'必須有六座實際島嶼');
+  assert.equal(initial.settlements,3,'河岸背景須有三組土木聚落');
   assert.deepEqual(initial.islands.map(i=>i.index),[0,1,2,3,4,5]);
   assert.equal(new Set(initial.islands.map(i=>i.position.join(','))).size,6,'六座島不可重疊');
   assert.ok(initial.islands.every(i=>i.rendered&&i.dock),'每座島及碼頭須附屬實景');

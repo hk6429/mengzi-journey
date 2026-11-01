@@ -13,7 +13,7 @@ export function createScene(container) {
   const renderer = new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true}); renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.shadowMap.enabled=true; container.append(renderer.domElement);
   const controls = new OrbitControls(camera, renderer.domElement); controls.target.set(0, 1, 0); controls.enablePan=false; controls.minDistance=7; controls.maxDistance=500; controls.maxPolarAngle=Math.PI*.48; controls.update();
   scene.add(new THREE.HemisphereLight('#fff4da','#485d50',2)); const sun=new THREE.DirectionalLight('#fff1d1',2); sun.position.set(5,10,6); scene.add(sun);
-  const water = new THREE.Mesh(new THREE.PlaneGeometry(145, 28), new THREE.MeshStandardMaterial({color:'#719e9c',roughness:.65}));
+  const water = new THREE.Mesh(new THREE.PlaneGeometry(145, 48), new THREE.MeshStandardMaterial({color:'#719e9c',roughness:.65}));
   water.rotation.x=-Math.PI/2; water.position.set(50,-.25,0); scene.add(water);
   const centers=Array.from({length:6},(_,i)=>new THREE.Vector3(i*20,0,0));
   const groups=[], islands=[], bridges=[],islandNames=[];
@@ -32,11 +32,20 @@ export function createScene(container) {
       for(const z of [-.6,.6]){const rail=new THREE.Mesh(new THREE.BoxGeometry(8.4,.12,.12),wood);rail.position.set(0,1.15,z);bridge.add(rail);for(const x of [-4,0,4]){const post=new THREE.Mesh(new THREE.BoxGeometry(.12,.6,.12),wood);post.position.set(x,.85,z);bridge.add(post)}}scene.add(bridge);bridges.push(bridge);
     }
   }
-  // 遠山沿河布置，形成連續的水墨山水。
-  for(let n=0;n<20;n++){
-    const height=5+(n*7%6)*.8;
-    const mountain=new THREE.Mesh(new THREE.ConeGeometry(5,height,5),new THREE.MeshStandardMaterial({color:n%2?'#899e91':'#a4b4a8',roughness:1,flatShading:true}));
-    mountain.position.set(-15+n*7,height/2-.35,-19-(n%3)*3);scene.add(mountain);
+  const backdrop=new THREE.Group();backdrop.name='warring-backdrop';scene.add(backdrop);
+  const bank=new THREE.Mesh(new THREE.BoxGeometry(145,.4,12),new THREE.MeshStandardMaterial({color:'#ad9d7a',roughness:1}));bank.position.set(50,-.4,-29);backdrop.add(bank);
+  // 分層丘陵與低矮土木聚落是時代氛圍的美術詮釋，非特定遺址復原。
+  for(let layer=0;layer<2;layer++)for(let n=0;n<16;n++){
+    const mountain=new THREE.Mesh(new THREE.SphereGeometry(1,10,7),new THREE.MeshStandardMaterial({color:layer?'#a2b0a0':'#798b78',roughness:1,flatShading:true}));
+    mountain.scale.set(6+n%3,4+(n*7%6),4);mountain.position.set(-20+n*10+layer*4,-1.8,-29-layer*12);backdrop.add(mountain);
+  }
+  for(const x of [9,45,83]){
+    const village=new THREE.Group();village.name='riverbank-settlement';village.position.set(x,0,-24);backdrop.add(village);
+    const earth=new THREE.Mesh(new THREE.BoxGeometry(7,.75,.45),new THREE.MeshStandardMaterial({color:'#aa8963',roughness:1}));earth.position.set(0,.2,1.8);village.add(earth);
+    for(const offset of [-1.8,1.8]){
+      const house=new THREE.Mesh(new THREE.BoxGeometry(2.5,1.2,1.8),new THREE.MeshStandardMaterial({color:'#b69a70',roughness:1}));house.position.set(offset,.6,0);village.add(house);
+      const roof=new THREE.Mesh(new THREE.CylinderGeometry(1,1,2.9,3,1,false,Math.PI/2),new THREE.MeshStandardMaterial({color:'#68543e',roughness:1}));roof.rotation.z=Math.PI/2;roof.scale.set(.65,1,1.2);roof.position.set(offset,1.525,0);village.add(roof);
+    }
   }
   let group; let hero; let station=0; const targetPoint=new THREE.Vector3(0,1,0); let heroDestination=new THREE.Vector3(0,0,2); let desiredDistance=null;controls.addEventListener('start',()=>{desiredDistance=null});
   const material=c=>new THREE.MeshStandardMaterial({color:c,roughness:.9});
