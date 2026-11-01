@@ -45,7 +45,7 @@ function farthest(root) {
 const dXZ = (b, x, z) => Math.hypot(Math.max(b.min.x - x, 0, x - b.max.x), Math.max(b.min.z - z, 0, z - b.max.z));
 const label = o => { for (let q = o; q; q = q.parent) if (q.userData.pick) return q.userData.pick.el; return o.geometry.type; };
 
-for (const id of ['jing', 'xiang', 'pin', 'lianxi']) {
+for (const id of ['bridge', 'study', 'city']) {
   test(id, () => {
     const d = DATA.planets.find(p => p.id === id), P = lpKit(d);
     const g = LP_BUILD[id](P);
@@ -81,16 +81,19 @@ for (const id of ['jing', 'xiang', 'pin', 'lianxi']) {
     assert.ok(Array.isArray(g.userData.rim) && g.userData.rim.length >= 2 && g.userData.rim.length <= 4, 'rim 給 2–4 個角度');
     console.log(id, `mesh=${own}（含 chibi ${all}）`, `最遠 r=${far.r.toFixed(2)}`, report.join(' '));
 
-    // notch：荷葉缺口方向（度），不對 +z；缺口楔形（±18°、r>3）內沒有高出葉面的東西
-    const n = g.userData.notch, an = a => Math.abs(((a % 360) + 540) % 360 - 180);
-    assert.ok(typeof n === 'number' && an(n) >= 60, `notch ${n} 太靠近 +z`);
+    // dock：碼頭方向（度）；碼頭楔形（±20°、r>3.1）內沒有高出地面的東西
+    const dk = g.userData.dock, an = a => Math.abs(((a % 360) + 540) % 360 - 180);
+    assert.ok(typeof dk === 'number', '要有 dock 角度');
     g.traverse(o => {
       if (!o.isMesh) return; const pos = o.geometry.attributes.position;
       for (const m of mats(o)) for (let i = 0; i < pos.count; i++) {
         v.fromBufferAttribute(pos, i).applyMatrix4(m);
-        if (v.y > 0.04 && Math.hypot(v.x, v.z) > 3 && an(Math.atan2(v.x, v.z) * 180 / Math.PI - n) < 18) assert.fail(`缺口楔形裡有東西：${label(o)}`);
+        if (v.y > 0.04 && Math.hypot(v.x, v.z) > 3.1 && an(Math.atan2(v.x, v.z) * 180 / Math.PI - dk) < 20) assert.fail(`碼頭楔形裡有東西：${label(o)}`);
       }
     });
+    // 配角臉朝鏡頭（+z）：chibi 根節點的世界 +z 方向 cos ≥ 0.5
+    const q = new THREE.Quaternion();
+    g.traverse(o => { if (o.userData.chibi) { o.getWorldQuaternion(q); const f = new THREE.Vector3(0, 0, 1).applyQuaternion(q); assert.ok(f.z >= 0.5, `${label(o.children[0] || o)} 臉沒朝鏡頭 cos=${f.z.toFixed(2)}`); } });
     assert.ok(P.anim.length > 0, '要有動畫');
     for (const t of [0.5, 1, 15, 29, 31, 45, 59.5]) P.anim.forEach(f => f(0.016, t));
   });
