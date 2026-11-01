@@ -129,164 +129,215 @@ function lpCloudSprite(variant, w, color = '#ffffff', opacity = 1, solid = true)
 }
 const LP_OVERLAY = 1;
 
-// ================= 第二輪（C 線，愛蓮說）：巨大荷葉平台、荷花、浮葉 =================
-// 八站設色：leaf 葉面、rim 葉緣深綠、under 葉背灰綠、stem 荷梗、bloom 荷花尖端粉色、sky [天頂, 地平線薄霧, 水色]（沒有全景圖時的淡彩漸層）、mist 霧量
+// ================= 第二版（C 線，生於憂患）：河中崖島、大河、石階碼頭 =================
+// 六站設色：top／top2 平台土色、up／up2 崖上半、low／low2 崖下半、pine 崖柏、mist 水線白沫與水霧色、
+//   sky [天頂, 地平線薄霧, 河水色]（沒有全景圖時的淡彩漸層；河水黛青灰綠）、fog 霧量 0–1
 const LP_TONE = {
-  base:   { leaf: '#74aa6a', rim: '#4d8452', under: '#a3b89c', stem: '#6f9a5a', bloom: '#eea6b8', sky: ['#cfe0e2', '#f1ece0', '#9cc7bc'], mist: 0.35 },
-  baihua: { leaf: '#79ae6c', rim: '#4f8a55', under: '#a4ba9c', stem: '#71a05c', bloom: '#f2a8bf', sky: ['#cde3e8', '#f6efe2', '#a2cec2'], mist: 0.3 },  // 繽紛淡彩：夏日清晨
-  ju:     { leaf: '#93a863', rim: '#6c8147', under: '#b4b893', stem: '#7f9258', bloom: '#f0d27a', sky: ['#d9dcd6', '#ece6d6', '#a9c2b6'], mist: 0.75 }, // 秋黃：深秋薄霧
-  mudan:  { leaf: '#7caa6a', rim: '#548250', under: '#a9ba9a', stem: '#73995a', bloom: '#e5869e', sky: ['#efd9d6', '#f8ece2', '#b0cfc3'], mist: 0.3 },  // 暖粉：春日霞光
-  yuni:   { leaf: '#6eaa72', rim: '#478758', under: '#9fbaa2', stem: '#6c9c5e', bloom: '#f4c6d2', sky: ['#cfe5e2', '#eff2e8', '#93c8bb'], mist: 0.3 },  // 清綠粉白：夏午
-  jing:   { leaf: '#70ab70', rim: '#488656', under: '#a0bba0', stem: '#6c9c5e', bloom: '#f4c6d2', sky: ['#d0e6e4', '#f0f2e8', '#95c9bd'], mist: 0.3 },
-  xiang:  { leaf: '#74ad74', rim: '#4c885a', under: '#a5bda5', stem: '#6f9e60', bloom: '#f6cbd6', sky: ['#e3e2ea', '#f6f1ec', '#a6d0c6'], mist: 0.35 }, // 粉白微風
-  pin:    { leaf: '#85a987', rim: '#5d8466', under: '#adbcac', stem: '#78966a', bloom: '#eee4e2', sky: ['#dee3e0', '#f2eee6', '#a8c6bd'], mist: 0.4 },  // 素雅：午後
-  lianxi: { leaf: '#8aa864', rim: '#647f40', under: '#b6b68e', stem: '#7f9456', bloom: '#f3b98a', sky: ['#efcfa4', '#f8e3c4', '#c2c39f'], mist: 0.35 }  // 夕照金
+  base:   { top: '#a9a46c', top2: '#8f975a', up: '#8f8a7c', up2: '#7a776c', low: '#8a7a62', low2: '#6f6656', pine: '#4d6a43', mist: '#eef0e2', sky: ['#cfe0e2', '#f3eddc', '#6f8a7e'], fog: 0.35 }
 };
-const LP_LEAF_GAP = 0; // 荷葉缺口寬（度）：荷（蓮）葉是完整圓盾，有缺口的是睡蓮，所以 0；notch 參數仍保留當上岸方向
-
-// 葉面紋理（全部荷葉共用）：底灰 0.84、葉臍一點淺色、向外 20 條淡色主脈（中段分叉）、葉緣壓暗；頂點色乘上它
-let lpVeinT = null;
-function lpVeinTex() {
-  if (lpVeinT) return lpVeinT;
-  const N = 1024, c = document.createElement('canvas'); c.width = c.height = N; const x = c.getContext('2d'), r = mulberry32(17), h = N / 2;
-  x.fillStyle = 'rgb(214,214,214)'; x.fillRect(0, 0, N, N);
-  for (let i = 0; i < 260; i++) { x.fillStyle = `rgba(${r() < 0.5 ? '255,255,240' : '60,80,50'},${0.03 + r() * 0.05})`; x.beginPath(); x.ellipse(r() * N, r() * N, 6 + r() * 30, 4 + r() * 20, r() * 3, 0, 7); x.fill(); }
-  x.lineCap = 'round';
-  for (let i = 0; i < 20; i++) {
-    const a = (i + r() * 0.3) / 20 * Math.PI * 2, wob = (r() - 0.5) * 0.08;
-    const pt = (t, da = 0) => [h + Math.sin(a + wob * t + da) * t * h * 0.98, h + Math.cos(a + wob * t + da) * t * h * 0.98];
-    x.strokeStyle = 'rgba(255,255,236,.75)'; x.lineWidth = 5;
-    x.beginPath(); x.moveTo(...pt(0.04)); for (let t = 0.08; t <= 0.62; t += 0.04) x.lineTo(...pt(t)); x.stroke();
-    x.lineWidth = 3;   // 分叉成兩條細脈
-    for (const s of [-1, 1]) { x.beginPath(); x.moveTo(...pt(0.62)); for (let t = 0.66; t <= 1.0; t += 0.04) x.lineTo(...pt(t, s * (t - 0.62) * 0.11)); x.stroke(); }
-  }
-  let g = x.createRadialGradient(h, h, 0, h, h, 42); g.addColorStop(0, 'rgba(255,255,230,1)'); g.addColorStop(1, 'rgba(255,255,230,0)'); x.fillStyle = g; x.fillRect(0, 0, N, N);
-  g = x.createRadialGradient(h, h, h * 0.86, h, h, h); g.addColorStop(0, 'rgba(40,60,30,0)'); g.addColorStop(1, 'rgba(40,60,30,.35)'); x.fillStyle = g; x.fillRect(0, 0, N, N);
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
-  return (lpVeinT = t);
-}
-// 荷花幾何（合併、頂點色）：原點＝花托底；open 0＝花苞、1＝盛開；size＝花高約略；tint＝花瓣尖端色
-function lpBloomGeo(open = 1, size = 0.5, tint = '#eea6b8') {
-  const W = new THREE.Color('#fbf6ef'), T = new THREE.Color(tint), out = [], cc = new THREE.Color();
-  const rings = open > 0.3 ? [[6, 0.15 + 0.2 * open, 0.85], [8, 0.35 + 0.5 * open, 1], [8, 0.55 + 0.75 * open, 1.05]] : [[5, 0.12, 1], [5, 0.22, 1.05]];
-  rings.forEach(([n, tilt, k], ri) => {
-    for (let i = 0; i < n; i++) {
-      const g = new THREE.SphereGeometry(1, 10, 8).scale(0.3 * k * (open > 0.3 ? 1 : 0.85), 0.5 * k, 0.11).translate(0, 0.5 * k, 0.04);
-      const p = g.attributes.position, col = [];
-      for (let j = 0; j < p.count; j++) { const y = p.getY(j) / k; cc.copy(W).lerp(T, clamp((y - 0.45) / 0.55, 0, 1) * 0.85); col.push(cc.r, cc.g, cc.b); }
-      g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.deleteAttribute('uv');
-      g.rotateX(tilt).rotateY((i + ri * 0.5) / n * Math.PI * 2); out.push(g);
-    }
-  });
-  if (open > 0.3) { const pod = new THREE.CylinderGeometry(0.16, 0.12, 0.14, 12).translate(0, 0.2, 0), pc = [], P = pod.attributes.position;
-    for (let j = 0; j < P.count; j++) { cc.set(P.getY(j) > 0.26 ? '#c9c45a' : '#e2cf6a'); pc.push(cc.r, cc.g, cc.b); }
-    pod.setAttribute('color', new THREE.Float32BufferAttribute(pc, 3)); pod.deleteAttribute('uv'); out.push(pod); }
-  return BGU.mergeGeometries(out.map(g => g.index ? g.toNonIndexed() : g)).scale(size, size, size);
-}
+Object.assign(LP_TONE, {
+  fields: { ...LP_TONE.base, sky: ['#cde3e6', '#f6efdc', '#6f8c7e'], fog: 0.3 },                                                                       // 晨光田綠
+  market: { ...LP_TONE.base, top: '#c9a46a', top2: '#b08a54', up: '#a08a6c', up2: '#8a7660', low: '#a07a54', low2: '#86694e', pine: '#5a6440', mist: '#f2e4c8', sky: ['#e4d6ba', '#f6e9d0', '#7a8670'], fog: 0.3 },   // 赭黃熱鬧
+  road:   { ...LP_TONE.base, top: '#a8a48e', top2: '#8e8c7a', up: '#7f8688', up2: '#6b7276', low: '#7a7670', low2: '#66645f', pine: '#3f5048', mist: '#dde2e2', sky: ['#c2cbd0', '#e3e6e2', '#647c7c'], fog: 0.55 },   // 冷灰青
+  bridge: { ...LP_TONE.base, top: '#b4a874', top2: '#98925e', up: '#8c8a78', up2: '#76766a', low: '#8a7c62', low2: '#726a56', pine: '#55703f', mist: '#e8ecd8', sky: ['#d0dfd2', '#efeedc', '#6c8a7a'], fog: 0.35 },   // 竹木
+  study:  { ...LP_TONE.base, top: '#b89a74', top2: '#9c7e5c', up: '#8e8070', up2: '#786b5e', low: '#8c7460', low2: '#74604e', pine: '#4c5a40', mist: '#f0e2cc', sky: ['#e0d2be', '#f4e7d4', '#76806c'], fog: 0.35 },   // 暖褐
+  city:   { ...LP_TONE.base, top: '#b88c66', top2: '#9c7050', up: '#8a7470', up2: '#74605e', low: '#8e6a56', low2: '#745448', pine: '#3e4a3c', mist: '#f0d2bc', sky: ['#d2a68e', '#f2cdac', '#6e7062'], fog: 0.4 }      // 暮色赭紅
+});
 // 給一個幾何上單色頂點色
 function lpPaintGeo(g, hex) { const c = new THREE.Color(hex), n = g.attributes.position.count, a = new Float32Array(n * 3); for (let i = 0; i < n; i++) a.set([c.r, c.g, c.b], i * 3); g.setAttribute('color', new THREE.BufferAttribute(a, 3)); if (g.attributes.uv) g.deleteAttribute('uv'); return g.index ? g.toNonIndexed() : g; }
-// 浮在水面的小荷葉（平圓、有缺口；頂面 y=0）：回傳頂點色幾何
-function lpPadGeo(r = 1, notch = 0, hex = '#76ab6a') {
-  const gap = LP_LEAF_GAP * Math.PI / 180, g = new THREE.CylinderGeometry(r, r * 0.97, 0.05, 28, 1, false, notch * Math.PI / 180 + gap / 2, Math.PI * 2 - gap).translate(0, -0.025, 0);
-  const p = g.attributes.position, c = new THREE.Color(hex), d = new THREE.Color(hex).multiplyScalar(0.72), l = new THREE.Color(hex).lerp(new THREE.Color('#e6efc2'), 0.45), col = [], cc = new THREE.Color();
-  for (let i = 0; i < p.count; i++) { const rr = Math.hypot(p.getX(i), p.getZ(i)) / r; cc.copy(rr < 0.15 ? l : c).lerp(d, clamp((rr - 0.8) / 0.2, 0, 1)); col.push(cc.r, cc.g, cc.b); }
-  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.deleteAttribute('uv');
-  return g.toNonIndexed();
+// 崖體剖面：t=0 平台邊緣 → t=1 河底；入水崖岸比石峰矮胖：上段近直、往下微微外擴
+const lpCliffProfile = t => 1 - 0.04 * Math.sin(t * Math.PI) + 0.14 * t * t;
+const scSmoothCore = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+// 碼頭尺寸（純函式，scene 的航道計算也用）：R 平台半徑、HT 平台離水高 → 石階頂／底與碼頭端離島心距離、甲板高（相對平台頂）、水線崖岸半徑
+function lpDockGeo(R, HT) {
+  const H = HT + 1.6, Rw = R * lpCliffProfile((HT - 0.1) / H) * 1.06, deckY = -HT + 0.35, rise = 0.24, run = 0.3;
+  const nSt = Math.max(2, Math.ceil(-deckY / rise)), rTop = R - 0.55, rBot = rTop + nSt * run;
+  return { H, Rw, deckY, rise, run, nSt, rTop, rBot, rEnd: Math.max(rBot + 1.4, Rw + 1.7) };
 }
 
-// 巨大荷葉平台：回傳 Group（name 'lotusleaf'；原點＝葉心，葉面頂 y=0 平坦、半徑 4.6 內可站；外緣 0.8 往上翹 0.15–0.3 並起伏）
-//   radius 葉半徑；seed 形狀；tone 見 LP_TONE；notch 缺口方向（度，0＝+z、90＝+x）；rim 葉緣點綴角度（度）；stem 葉面離水高（水面在 y=−stem）
-//   附帶：粗荷梗（細刺點）、水面葉影與兩圈漣漪、葉旁 2–4 片浮葉與 1–2 朵荷花／花苞（半徑 6 以外）、rim 角度上的小荷花／蜻蜓、葉面幾顆露珠
-function lpLotusLeaf({ radius: R = 5.4, seed = 1, tone = 'base', notch = 200, rim = [], stem = 1.5 } = {}) {
-  const T = LP_TONE[tone] || LP_TONE.base, rnd = mulberry32(seed), sn = new SimplexNoise({ random: rnd }), C = h => new THREE.Color(h);
-  const g = new THREE.Group(); g.name = 'lotusleaf';
-  const D2R = Math.PI / 180, gap = LP_LEAF_GAP * D2R, a0 = notch * D2R + gap / 2, span = Math.PI * 2 - gap, s0 = rnd() * 10;
-  const FLAT = 3.9, lift = (r, a) => { const t = Math.max(0, (r - FLAT) / (R - FLAT)); return t * t * (0.30 + 0.18 * (0.5 + 0.5 * Math.sin(a * 11 + s0)) + 0.04 * sn.noise(Math.cos(a) * 3, Math.sin(a) * 3)); };
-  const thick = r => 0.05 + 0.32 * Math.pow(1 - r / R, 2);
-  // ---- 葉身：上表面（中心→葉緣）＋下表面（葉緣→中心）一圈圈接起來（有缺口時兩側封邊）；外緣翹成 11 道波浪的淺碗 ----
-  const NA = 132, NR = 16, rows = [];
-  const rOf = j => R * (1 - Math.pow(1 - j / NR, 1.4)); // 葉緣附近環比較密（翹邊才圓順）
-  for (let j = 0; j <= NR; j++) rows.push(j);
-  const pos = [], col = [], uv = [], idx = [], cTop = C(T.leaf), cRim = C(T.rim), cUnd = C(T.under), cNav = C(T.leaf).lerp(C('#dfe6b0'), 0.6), cc = new THREE.Color(), k = 1 / 0.84;
-  const vert = (r, a, y, c) => { pos.push(Math.sin(a) * r, y, Math.cos(a) * r); col.push(c.r, c.g, c.b); uv.push(0.5 + Math.sin(a) * r / (2 * R), 0.5 - Math.cos(a) * r / (2 * R)); };
-  // 列 0..NR＝上表面、NR+1..2NR+1＝下表面（葉緣→中心）
-  for (let row = 0; row <= 2 * NR + 1; row++) {
-    const top = row <= NR, j = top ? row : 2 * NR + 1 - row, r = rOf(j);
-    for (let i = 0; i <= NA; i++) {
-      const a = a0 + span * i / NA, y = lift(r, a) - (top ? 0 : thick(r));
-      if (top) { const rr = r / R; cc.copy(cTop).multiplyScalar(0.96 + 0.08 * sn.noise(Math.sin(a) * r * 0.4 + 7, Math.cos(a) * r * 0.4)).lerp(cRim, clamp((rr - 0.86) / 0.12, 0, 1) * 0.8); if (rr < 0.12) cc.lerp(cNav, 1 - rr / 0.12); cc.multiplyScalar(k); }
-      else { cc.copy(cUnd).multiplyScalar(k * (j === NR ? 0.85 : 1)); if (j === NR) cc.copy(cRim).multiplyScalar(k * 0.9); }
-      vert(r, a, y, cc);
+// 斧劈皴紋理（崖面）與夯土紋理（平台）：白底灰墨，乘上頂點的礦物色；全島共用一張（移植自空城計）
+let lpCunT = null, lpEarthT = null, lpCliffGrad = null, lpFoamT = null;
+function lpTexCanvas(w, h, draw) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'), r = mulberry32(w * 7 + h);
+  draw(x, r, w, h);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
+}
+// 一張貼圖＝寬 2 單位 × 一級岩階（rock 的 uv.v＝岩階相位）：上緣一道墨色檐下陰影、下緣岩唇提白、中間斧劈皴
+function lpCunTex() {
+  return lpCunT || (lpCunT = lpTexCanvas(512, 256, (x, r, w, h) => {
+    x.fillStyle = '#f2ede2'; x.fillRect(0, 0, w, h);
+    const g = x.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, 'rgba(40,32,26,.55)'); g.addColorStop(0.1, 'rgba(40,32,26,.18)'); g.addColorStop(0.3, 'rgba(40,32,26,0)');
+    g.addColorStop(0.82, 'rgba(255,255,248,0)'); g.addColorStop(0.95, 'rgba(255,255,248,.4)'); g.addColorStop(1, 'rgba(60,50,40,.3)');
+    x.fillStyle = g; x.fillRect(0, 0, w, h);
+    for (let i = 0; i < 70; i++) { const y0 = r() * 8, L = w * (0.08 + r() * 0.25), x0 = r() * w;
+      x.fillStyle = `rgba(38,32,26,${0.15 + r() * 0.3})`; for (const ox of [-w, 0, w]) { x.beginPath(); x.ellipse(x0 + ox, y0 + 4, L / 2, 2 + r() * 5, 0, 0, 7); x.fill(); } }
+    const stroke = (x0, y0, L, dx, lw, col) => { for (const ox of [-w, 0, w]) {
+      x.beginPath(); x.moveTo(x0 + ox, y0); x.lineTo(x0 + ox + dx, y0 + L); x.lineTo(x0 + ox + dx + lw, y0 + L * 0.85); x.closePath(); x.fillStyle = col; x.fill(); } };
+    for (let i = 0; i < 26; i++) { const x0 = r() * w, bw = 30 + r() * 70; x.fillStyle = `rgba(60,50,40,${0.05 + r() * 0.08})`;
+      for (const ox of [-w, 0, w]) { x.beginPath(); x.moveTo(x0 + ox, h * 0.12); x.lineTo(x0 + ox + bw, h * 0.12); x.lineTo(x0 + ox + bw * 0.6 + 12, h * 0.9); x.lineTo(x0 + ox - 8, h * 0.8); x.closePath(); x.fill(); } }
+    for (let i = 0; i < 150; i++) { const ink = r() < 0.75, y0 = h * (0.1 + r() * 0.55);
+      stroke(r() * w, y0, Math.min(h * 0.94 - y0, 40 + r() * 90), 6 + r() * 16, 4 + r() * 10, ink ? `rgba(38,32,26,${0.1 + r() * 0.3})` : `rgba(255,255,250,${0.2 + r() * 0.3})`); }
+  }));
+}
+// 夯土地面：細碎土斑、小石子、幾道乾裂紋
+function lpEarthTex() {
+  return lpEarthT || (lpEarthT = lpTexCanvas(256, 256, (x, r, w, h) => {
+    x.fillStyle = '#ffffff'; x.fillRect(0, 0, w, h);
+    const dot = (cx, cy, rx, ry, a, col) => { for (const ox of [-w, 0, w]) for (const oy of [-h, 0, h]) { x.beginPath(); x.ellipse(cx + ox, cy + oy, rx, ry, a, 0, 7); x.fillStyle = col; x.fill(); } };
+    for (let i = 0; i < 30; i++) dot(r() * w, r() * h, 12 + r() * 26, 8 + r() * 14, r() * 3, 'rgba(90,70,45,0.06)');
+    for (let i = 0; i < 700; i++) dot(r() * w, r() * h, 0.6 + r() * 1.2, 0.5 + r(), 0, r() < 0.7 ? `rgba(70,52,35,${0.12 + r() * 0.25})` : `rgba(255,250,235,${0.3 + r() * 0.4})`);
+    for (let i = 0; i < 40; i++) { const cx = r() * w, cy = r() * h, s = 1.5 + r() * 2.5; dot(cx + 0.6, cy + 0.8, s, s * 0.7, 0, 'rgba(60,45,30,.25)'); dot(cx, cy, s, s * 0.7, 0, `rgba(${200 + r() * 40 | 0},${190 + r() * 30 | 0},${170 + r() * 30 | 0},.9)`); }
+    x.strokeStyle = 'rgba(70,52,35,.18)'; x.lineWidth = 1;
+    for (let i = 0; i < 9; i++) { let px = r() * w, py = r() * h; x.beginPath(); x.moveTo(px, py); for (let k = 0; k < 5; k++) { px += (r() - 0.5) * 22; py += (r() - 0.5) * 22; x.lineTo(px, py); } x.stroke(); }
+  }));
+}
+// 水線：圓形貼圖，中心透明、0.69 處一圈碎白沫、往外一圈淡赭泥沙暈開
+function lpFoamTex() {
+  if (lpFoamT) return lpFoamT;
+  const N = 512, c = document.createElement('canvas'); c.width = c.height = N; const x = c.getContext('2d'), r = mulberry32(29), h = N / 2;
+  let g = x.createRadialGradient(h, h, h * 0.62, h, h, h);
+  g.addColorStop(0, 'rgba(170,140,90,0)'); g.addColorStop(0.12, 'rgba(170,140,90,.5)'); g.addColorStop(0.45, 'rgba(160,132,86,.22)'); g.addColorStop(1, 'rgba(160,132,86,0)');
+  x.fillStyle = g; x.fillRect(0, 0, N, N);
+  for (let i = 0; i < 420; i++) { const a = r() * Math.PI * 2, rr = h * (0.67 + Math.pow(r(), 2) * 0.14), s = 2 + r() * 7;
+    x.fillStyle = `rgba(255,255,250,${0.35 + r() * 0.5})`; x.beginPath(); x.ellipse(h + Math.cos(a) * rr, h + Math.sin(a) * rr, s * 1.8, s * 0.7, a + Math.PI / 2, 0, 7); x.fill(); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return (lpFoamT = t);
+}
+
+// 河中崖島：回傳 Group（name 'island'；原點＝平台中心，頂面 y≈0，河面在 y=−height）
+//   radius 平台半徑；seed 形狀；tone 見 LP_TONE；rim 要避開崖緣石的角度（度，0＝+z）；height 平台離水高；dock 碼頭角度（度）
+//   斧劈皴鋸齒層理崖體往下入河、水線上方濕暗帶、白沫泥沙環＋兩圈漣漪、蘆葦、水中礁石、崖柏；dock 方向一道石階下到木棧碼頭
+//   userData：water（河面 y）、depth、dock {deg, out（往外單位向量）, path（本地點：平台內→階頂→階底→碼頭端）, end（碼頭端）, deckY}
+function lpIsland({ radius: R = 5, seed = 1, tone = 'base', rim = [], height: HT = 1.6, dock: dockDeg = 50 } = {}) {
+  const T = LP_TONE[tone] || LP_TONE.base, rnd = mulberry32(seed), sn = new SimplexNoise({ random: rnd });
+  const C = h => new THREE.Color(h), V = THREE.Vector3, g = new THREE.Group(); g.name = 'island';
+  const DG = lpDockGeo(R, HT), H = DG.H, D2R = Math.PI / 180, da = dockDeg * D2R, out = new V(Math.sin(da), 0, Math.cos(da));
+  const near = (a, d, w) => { let x = a / D2R - d; x = ((x + 540) % 360) - 180; return Math.abs(x) < w; };
+  // ---- 平台頂面：極座標網格，中央平、近邊緣微微下彎，土色兩色斑駁 ----
+  const top = new THREE.RingGeometry(0.001, R, 72, 10).rotateX(-Math.PI / 2), tp = top.attributes.position, tc = [];
+  const cTop = C(T.top), cTop2 = C(T.top2), tmp = new THREE.Color();
+  for (let i = 0; i < tp.count; i++) {
+    const px = tp.getX(i), pz = tp.getZ(i), rr = Math.hypot(px, pz) / R;
+    tp.setY(i, -0.025 + 0.02 * sn.noise(px * 0.5, pz * 0.5) - 0.14 * Math.pow(Math.max(0, rr - 0.9) / 0.1, 2));
+    tmp.copy(cTop).lerp(cTop2, 0.5 + 0.5 * sn.noise(px * 0.35 + 9, pz * 0.35)).multiplyScalar(1 - 0.12 * Math.max(0, rr - 0.85) / 0.15); tc.push(tmp.r, tmp.g, tmp.b);
+  }
+  top.setAttribute('color', new THREE.Float32BufferAttribute(tc, 3)); top.computeVertexNormals();
+  const topMat = lpCel('#ffffff', { vertexColors: true }).clone(); topMat.map = lpEarthTex(); topMat.map.repeat.set(3, 3);
+  const topM = new THREE.Mesh(top, topMat); topM.name = 'island-top'; g.add(topM);
+  // ---- 崖體：一圈圈不規則環往下入河，鋸齒狀層理；朝下＝墨色陰面、朝上岩階＝浮塵；水線上方一道濕暗青苔帶；水下混進河水色 ----
+  const cUp = C(T.up), cUp2 = C(T.up2), cLow = C(T.low), cLow2 = C(T.low2), cInk = C('#3a3128'), cDust = C(T.top2), cWet = C('#4a5446'), cRiver = C(T.sky[2]), _c2 = new THREE.Color();
+  const _a = new V(), _b = new V(), _n = new V(), CREASE = Math.cos(50 * D2R), s0 = seed % 97, steps = Math.max(3, Math.round(H * 1.1));
+  const NS = 56, NJ = Math.max(10, Math.round(H * 4)), ring = [];
+  for (let j = 0; j <= NJ; j++) {
+    const t = j / NJ, row = [];
+    for (let k = 0; k <= NS; k++) {
+      const a = (k % NS + (j % 2) * 0.35) / NS * Math.PI * 2, ca = Math.cos(a), sa = Math.sin(a);
+      const ph = t * steps + 0.5 * sn.noise(ca * 0.9 + s0, sa * 0.9), saw = ph % 1, amp = Math.min(1, 0.15 + t * 5);
+      const rr = R * lpCliffProfile(t) * (1 + amp * (0.1 * sn.noise3d(ca * 1.5 + s0, sa * 1.5, t * 2.4) + 0.05 * sn.noise3d(ca * 4.5, sa * 4.5 + s0, t * 7) + 0.02 * sn.noise3d(ca * 12, sa * 12, t * 20 + s0))) * (1 + amp * 0.1 * saw);
+      row.push([sa * rr, -0.1 - t * H + (j ? 0.12 * sn.noise(ca * 2 + s0, sa * 2) : 0), ca * rr, t, k / NS, -ph]);
     }
+    ring.push(row);
   }
-  const W = NA + 1, id = (row, i) => row * W + i;
-  const nx = i => (gap ? i + 1 : (i + 1) % NA); // 整圓：最後一格接回第 0 欄，免接縫
-  for (let row = 0; row < 2 * NR + 1; row++) for (let i = 0; i < NA; i++) { const a = id(row, i), b = id(row, nx(i)), c2 = id(row + 1, i), d = id(row + 1, nx(i)); idx.push(a, c2, b, b, c2, d); }
-  // 缺口封邊：上表面第 j 環 ↔ 下表面第 j 環
-  if (gap) for (const [i, f] of [[0, 1], [NA, 0]]) for (let j = 0; j < NR; j++) {
-    const t0 = id(j, i), t1 = id(j + 1, i), b0 = id(2 * NR + 1 - j, i), b1 = id(2 * NR - j, i);
-    if (f) idx.push(t0, b1, t1, t0, b0, b1); else idx.push(t0, t1, b1, t0, b1, b0);
-  }
+  const tris = [], ur = Math.max(2, Math.round(R * 1.2));
+  for (let j = 0; j < NJ; j++) for (let k = 0; k < NS; k++) { const a = ring[j][k], b = ring[j][k + 1], c = ring[j + 1][k], d = ring[j + 1][k + 1]; tris.push([a, c, b], [b, c, d]); }
+  const fn = tris.map(([p, q, r]) => { _a.set(q[0] - p[0], q[1] - p[1], q[2] - p[2]); _b.set(r[0] - p[0], r[1] - p[1], r[2] - p[2]); return new V().crossVectors(_a, _b); });
+  const fu = fn.map(n => n.clone().normalize()), key = v => Math.round(v[0] * 1e3) + ',' + Math.round(v[1] * 1e3) + ',' + Math.round(v[2] * 1e3), groups = new Map();
+  tris.forEach((tr, f) => tr.forEach(v => { const k = key(v); (groups.get(k) || groups.set(k, []).get(k)).push(f); }));
+  const pos = [], col = [], uv = [], nor = [];
+  tris.forEach((tr, f) => tr.forEach(v => {
+    _n.set(0, 0, 0); for (const gi of groups.get(key(v))) if (fu[gi].dot(fu[f]) > CREASE) _n.add(fn[gi]); _n.normalize();
+    pos.push(v[0], v[1], v[2]); nor.push(_n.x, _n.y, _n.z); uv.push(v[4] * ur, v[5]);
+    const t = v[3], ang = Math.atan2(v[0], v[2]), f2 = scSmoothCore(0.15, 0.55, t), y = v[1];
+    tmp.copy(cUp).lerp(cUp2, 0.5 + 0.5 * sn.noise(ang * 1.3 + s0, t * 3)).lerp(_c2.copy(cLow).lerp(cLow2, 0.5 + 0.5 * sn.noise(ang * 2 + 4, t * 4)), f2);
+    tmp.multiplyScalar(0.97 + 0.06 * sn.noise(ang * 6 + s0, t * 9));
+    tmp.multiplyScalar(1 - 0.14 * scSmoothCore(0.35, 0.6, sn.noise(ang * 9 + s0, t * 1.5)));
+    if (_n.y < -0.2) tmp.lerp(cInk, Math.min(0.35, (-_n.y - 0.2) * 1.1));
+    else if (_n.y > 0.3) tmp.lerp(cDust, Math.min(0.45, (_n.y - 0.3) * 1.3));
+    if (t < 0.06) tmp.lerp(cDust, 0.4 * (1 - t / 0.06));
+    const above = y + HT;                                                             // 離水高
+    tmp.lerp(cWet, 0.55 * (1 - scSmoothCore(0, 0.55 + 0.25 * sn.noise(ang * 5 + s0, 3), above)));   // 水線上方濕暗帶（參差）
+    if (above < 0) tmp.lerp(cRiver, Math.min(0.85, 0.45 - above * 0.5));              // 水下混進河色
+    col.push(tmp.r, tmp.g, tmp.b);
+  }));
   const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
-  geo.setIndex(idx); geo.computeVertexNormals();
-  const leafMat = lpCel('#ffffff', { vertexColors: true }).clone(); leafMat.map = lpVeinTex();
-  const leaf = new THREE.Mesh(geo, leafMat); leaf.name = 'leaf-body'; g.add(leaf);
-  // ---- 荷梗：葉心往下伸進水裡，表面細刺點 ----
-  const H = Math.max(0.3, stem), sg = new THREE.CylinderGeometry(0.11, 0.14, H + 0.6, 10, 4).translate(0, -(H + 0.6) / 2 - thick(0) + 0.05, 0);
-  const sp = sg.attributes.position; for (let i = 0; i < sp.count; i++) { const y = sp.getY(i); sp.setX(i, sp.getX(i) + 0.12 * Math.sin(y * 0.9 + s0)); }
-  sg.computeVertexNormals();
-  const stemM = new THREE.Mesh(sg, lpCel(T.stem)); stemM.name = 'leaf-stem'; g.add(stemM);
-  const NTh = 36, th = new THREE.InstancedMesh(new THREE.ConeGeometry(0.018, 0.05, 4).rotateZ(-Math.PI / 2).translate(0.13, 0, 0), lpCel(new THREE.Color(T.stem).multiplyScalar(0.7).getStyle()), NTh);
-  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), V = THREE.Vector3, p3 = new V(), sc = new V(1, 1, 1);
-  for (let i = 0; i < NTh; i++) { const y = -thick(0) - 0.1 - rnd() * (H - 0.1); m4.compose(p3.set(0.12 * Math.sin(y * 0.9 + s0), y, 0), q.setFromEuler(e.set(0, rnd() * 6.3, 0)), sc); th.setMatrixAt(i, m4); }
-  th.name = 'leaf-thorns'; g.add(th);
-  // ---- 水面：葉影＋漣漪（水面 y = −H） ----
-  const wy = -H + 0.025;
-  const shadow = new THREE.Mesh(new THREE.CircleGeometry(R * 0.92, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#2f5a4a', transparent: true, opacity: 0.16, depthWrite: false, toneMapped: false }));
-  shadow.position.set(0.5, wy, -0.3); shadow.name = 'leaf-shadow'; shadow.renderOrder = 1; g.add(shadow);
-  const rings = [0, 1].map(i => { const m = new THREE.Mesh(new THREE.RingGeometry(0.92, 1, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#f4fbf6', transparent: true, opacity: 0, depthWrite: false, toneMapped: false }));
-    m.position.y = wy + 0.01; m.name = 'leaf-ripple'; m.renderOrder = 2; g.add(m); return m; });
-  // ---- 葉旁點綴：浮葉 2–4 片、荷花／花苞 1–2 朵（半徑 6–8.5，避開正前方 ±35°） ----
-  const around = () => { let a; do a = rnd() * Math.PI * 2; while (Math.abs(Math.atan2(Math.sin(a), Math.cos(a))) < 0.62); return a; };
-  const pads = [], nP = 2 + Math.floor(rnd() * 3);
-  for (let i = 0; i < nP; i++) { const a = around(), rr = 6.2 + rnd() * 2.3; pads.push(lpPadGeo(0.6 + rnd() * 0.6, rnd() * 360, T.leaf).translate(Math.sin(a) * rr, wy + 0.04, Math.cos(a) * rr)); }
-  const blooms = [], nB = 1 + Math.floor(rnd() * 2);
-  for (let i = 0; i < nB; i++) { const a = around(), rr = 6 + rnd() * 1.6, h = 0.8 + rnd() * 0.8, op = i ? 0 : 1, x0 = Math.sin(a) * rr, z0 = Math.cos(a) * rr;
-    blooms.push(lpBloomGeo(op, op ? 0.55 : 0.45, T.bloom).translate(x0, wy + h, z0), lpPaintGeo(new THREE.CylinderGeometry(0.035, 0.045, h, 6).translate(x0, wy + h / 2, z0), T.stem)); }
-  // ---- rim：葉緣小荷花（第 1 個）、蜻蜓（第 2 個）；沒給就挑缺口兩側 ----
-  const rims = (rim && rim.length ? rim : [notch + 115, notch + 160]).slice(0, 3);
-  const vc = lpCel('#ffffff', { vertexColors: true });
-  if (rims[0] != null) { const a = rims[0] * D2R, rr = R + 0.15; blooms.push(lpBloomGeo(1, 0.4, T.bloom).translate(Math.sin(a) * rr, wy + 0.9 + H * 0.15, Math.cos(a) * rr), lpPaintGeo(new THREE.CylinderGeometry(0.03, 0.04, 0.9 + H * 0.15, 6).translate(Math.sin(a) * rr, wy + (0.9 + H * 0.15) / 2, Math.cos(a) * rr), T.stem)); }
-  // ---- 上岸踏板：notch 方向一片斜靠葉緣的小錢葉（往外斜向水面），下面一根細梗接到水裡 ----
-  { const a = notch * D2R, rIn = R - 0.15, y0 = lift(rIn, a) + 0.02, PR = 1.2, th = clamp(Math.asin(Math.min(1, (y0 + H) / (2 * PR))), 0.25, 0.6);
-    const cx = rIn + PR * Math.cos(th), cy = y0 - PR * Math.sin(th), sh = cy + H;
-    pads.push(lpPadGeo(PR, 0, '#8dbb76').rotateZ(-th).translate(cx, cy, 0).rotateY(a - Math.PI / 2));
-    if (sh > 0.05) pads.push(lpPaintGeo(new THREE.CylinderGeometry(0.035, 0.045, sh, 6).translate(cx, cy - sh / 2, 0).rotateY(a - Math.PI / 2), T.stem)); }
-  const deco = new THREE.Mesh(BGU.mergeGeometries([...pads, ...blooms]), vc); deco.name = 'leaf-deco'; g.add(deco);
-  let fly = null;
-  if (rims[1] != null) { // 蜻蜓：細長藍腹、深藍胸、四片透明翅
-    fly = new THREE.Group(); fly.name = 'leaf-dragonfly';
-    fly.add(new THREE.Mesh(BGU.mergeGeometries([lpPaintGeo(new THREE.CylinderGeometry(0.02, 0.011, 0.38, 6).rotateX(Math.PI / 2).translate(0, 0, -0.13), '#4f86b8'), lpPaintGeo(new THREE.SphereGeometry(0.045, 8, 6).scale(1, 1, 1.3).translate(0, 0, 0.08), '#2f5f8a'),
-      lpPaintGeo(new THREE.SphereGeometry(0.024, 6, 4).translate(0.03, 0.01, 0.15), '#1f2a30'), lpPaintGeo(new THREE.SphereGeometry(0.024, 6, 4).translate(-0.03, 0.01, 0.15), '#1f2a30')]), vc));
-    const wing = new THREE.PlaneGeometry(0.26, 0.06).rotateX(-Math.PI / 2), wm = new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.45, side: THREE.DoubleSide, depthWrite: false, toneMapped: false });
-    fly.userData.wings = [[0.15, 0.05], [-0.15, 0.05], [0.14, -0.02], [-0.14, -0.02]].map(([x, z]) => { const w = new THREE.Mesh(wing, wm); w.position.set(x, 0.01, z); fly.add(w); return w; });
-    // 蛙平時蹲在葉前緣右側（約 +46°）：蜻蜓只停在葉後半（105–255°）且離上岸處 30° 以上，否則改到左後 240°，不再擋蛙臉
-    const ad = (x, y) => Math.abs(((x - y) % 360 + 540) % 360 - 180), r1 = ad(rims[1], 180) <= 75 && ad(rims[1], notch) > 30 ? rims[1] : ad(240, notch) > 40 ? 240 : 125;
-    const a = r1 * D2R; fly.userData.home = new V(Math.sin(a) * (R - 0.2), 0.75, Math.cos(a) * (R - 0.2)); fly.position.copy(fly.userData.home); fly.rotation.y = a + Math.PI / 2; g.add(fly);
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  const cliffMat = lpCel('#ffffff', { vertexColors: true }).clone(); cliffMat.map = lpCunTex();
+  if (!lpCliffGrad) { lpCliffGrad = new THREE.DataTexture(new Uint8Array([150, 150, 165, 185, 210, 235, 255, 255].flatMap(v => [v, v, v, 255])), 8, 1); lpCliffGrad.minFilter = lpCliffGrad.magFilter = THREE.LinearFilter; lpCliffGrad.needsUpdate = true; }
+  cliffMat.gradientMap = lpCliffGrad;
+  const cliff = new THREE.Mesh(geo, cliffMat); cliff.name = 'island-cliff'; g.add(cliff);
+  const Rw = DG.Rw;                                                                     // 水線處崖岸半徑（約）
+  // ---- 石階＋木棧碼頭（dock 方向）：石階從平台邊往外往下，每級一塊石墩到水；碼頭甲板離水 0.35 ----
+  const { deckY, rise, run, nSt, rTop, rBot, rEnd } = DG, side = new V(out.z, 0, -out.x), dk = [], cStone = C(T.up).lerp(C('#d8cdb4'), 0.35), cStone2 = C(T.up2);
+  const at = (r, y) => new V(out.x * r, y, out.z * r);
+  for (let i = 0; i < nSt; i++) {                                                     // 第 i 級頂面 y＝−(i+1)·rise（最後一級＝甲板高）
+    const yT = i === nSt - 1 ? deckY : -(i + 1) * rise, hgt = yT + HT + 0.6, c = at(rTop + (i + 0.5) * run, yT - hgt / 2);
+    dk.push(lpPaintGeo(new THREE.BoxGeometry(1.15, hgt, run + 0.02).rotateY(da).translate(c.x, c.y, c.z), (i % 2 ? cStone : tmp.copy(cStone).lerp(cStone2, 0.4)).getStyle()));
   }
-  // ---- 露珠：葉面 3–5 顆（避開主角站位） ----
-  const dews = [], nD = 3 + Math.floor(rnd() * 3);
-  while (dews.length < nD) { const a = rnd() * Math.PI * 2, rr = 1.4 + rnd() * 3; if (Math.abs(a - a0 + gap / 2) < 0.3) continue; const x = Math.sin(a) * rr, z = Math.cos(a) * rr; if (Math.hypot(x, z - 2.6) < 1.1) continue; dews.push([x, z, 0.05 + rnd() * 0.05]); }
-  const dew = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 12, 8), lpCel('#eaf7f4', { transparent: true, opacity: 0.7, emissive: '#ffffff', emissiveIntensity: 0.15 }), dews.length);
-  dews.forEach(([x, z, s], i) => { m4.compose(p3.set(x, s * 0.55, z), q.identity(), sc.set(s, s * 0.75, s)); dew.setMatrixAt(i, m4); }); sc.set(1, 1, 1);
-  dew.name = 'leaf-dew'; g.add(dew);
-  g.userData.water = -H;
-  g.userData.anim = (dt, t) => {
-    rings.forEach((m, i) => { const u = ((t * 0.28 + i * 0.5 + s0) % 1); m.scale.setScalar(0.5 + u * 3.2); m.material.opacity = 0.32 * Math.sin(Math.PI * u); });
-    if (fly) { const h = fly.userData.home; fly.position.set(h.x + 0.25 * Math.sin(t * 0.7 + s0), h.y + 0.08 * Math.sin(t * 2.3), h.z + 0.25 * Math.cos(t * 0.5 + s0)); fly.userData.wings.forEach((w, i) => { w.rotation.z = (i % 2 ? -1 : 1) * 0.35 * Math.sin(t * 40 + i); }); }
-  };
-  g.traverse(o => { o.raycast = () => {}; }); // 葉身不擋點選與取景
+  for (const s of [-1, 1]) {                                                          // 石階兩側矮石欄（斜）
+    const L = Math.hypot(nSt * run, -deckY), m = at((rTop + rBot) / 2, deckY / 2 + 0.12).addScaledVector(side, s * 0.6);
+    dk.push(lpPaintGeo(new THREE.BoxGeometry(0.12, 0.16, L).rotateX(Math.atan2(-deckY, nSt * run)).rotateY(da).translate(m.x, m.y, m.z), cStone2.getStyle()));
+  }
+  const cWood = C('#8a6844'), cWood2 = C('#a07a50'), cPost = C('#5a4430'), nPl = Math.round((rEnd - rBot) / 0.32);
+  for (let i = 0; i < nPl; i++) { const c = at(rBot + (i + 0.5) * (rEnd - rBot) / nPl, deckY - 0.05);
+    dk.push(lpPaintGeo(new THREE.BoxGeometry(1.3, 0.1, (rEnd - rBot) / nPl - 0.04).rotateY(da).translate(c.x, c.y, c.z), (i % 3 ? cWood : cWood2).getStyle())); }
+  for (const u of [0.35, 1]) for (const s of [-1, 1]) { const c = at(rBot + u * (rEnd - rBot) - 0.08, deckY - 0.4).addScaledVector(side, s * 0.58);
+    dk.push(lpPaintGeo(new THREE.CylinderGeometry(0.07, 0.08, 1.2, 6).translate(c.x, c.y + (u === 1 ? 0.25 : 0), c.z), cPost.getStyle())); }   // 端柱高出甲板當繫纜樁
+  const dockM = new THREE.Mesh(BGU.mergeGeometries(dk), lpCel('#ffffff', { vertexColors: true, flat: true })); dockM.name = 'island-dock'; g.add(dockM);
+  // ---- 崖緣碎石與乾草（避開碼頭與 rim） ----
+  const avoid = a => near(a, dockDeg, 16) || rim.some(d => near(a, d, 9));
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), sc = new V(), p3 = new V();
+  const stones = []; for (let i = 0; i < 16; i++) { const a = (i + rnd() * 0.6) / 16 * Math.PI * 2; if (!avoid(a)) stones.push(a); }
+  const st = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), lpCel('#ffffff', { flat: true }), stones.length), cS = C(T.up), cS2 = C(T.top2);
+  stones.forEach((a, i) => { const rr = R - 0.1 + rnd() * 0.08, s = 0.05 + rnd() * 0.07; st.setColorAt(i, tmp.copy(cS).lerp(cS2, rnd() * 0.6));
+    m4.compose(p3.set(Math.sin(a) * rr, -0.06, Math.cos(a) * rr), q.setFromEuler(e.set(rnd() * 3, rnd() * 3, rnd() * 3)), sc.set(s * (1.2 + rnd() * 0.6), s * 0.75, s)); st.setMatrixAt(i, m4); });
+  st.name = 'island-rimstones'; g.add(st);
+  const blade = []; for (let i = 0; i < 7; i++) { const a = i * 2.4, tilt = 0.25 + (i % 3) * 0.15, L = 0.14 + (i % 4) * 0.035;
+    blade.push(new THREE.ConeGeometry(0.016, L, 4).translate(0, L / 2, 0).rotateZ(tilt).rotateY(a).translate(Math.cos(a) * 0.03, 0, Math.sin(a) * 0.03)); }
+  const bladeG = BGU.mergeGeometries(blade), tufts = []; for (let i = 0; i < 30; i++) { const a = rnd() * Math.PI * 2; if (!avoid(a)) tufts.push(a); }
+  const tuft = new THREE.InstancedMesh(bladeG, lpCel('#ffffff'), tufts.length), cT = C('#8f9a56'), cT2 = C('#6f7a4c');
+  tufts.forEach((a, i) => { const rr = R - 0.08 - rnd() * 0.4, s = 0.7 + rnd() * 0.6;
+    m4.compose(p3.set(Math.sin(a) * rr, -0.04, Math.cos(a) * rr), q.setFromEuler(e.set(0, rnd() * 6.3, 0)), sc.set(s, s * (0.8 + rnd() * 0.5), s)); tuft.setMatrixAt(i, m4);
+    tuft.setColorAt(i, tmp.copy(cT).lerp(cT2, rnd() * 0.5).lerp(cTop, 0.25)); });
+  tuft.name = 'island-tufts'; g.add(tuft);
+  // ---- 水邊蘆葦：水線一叢叢高草（避開碼頭與正前方鏡頭） ----
+  const reeds = []; for (let i = 0; i < 18; i++) { const a = rnd() * Math.PI * 2; if (!near(a, dockDeg, 24) && Math.cos(a) < 0.7) reeds.push(a); }
+  const reed = new THREE.InstancedMesh(bladeG, lpCel('#ffffff'), reeds.length), cR = C('#7a8a4a'), cR2 = C('#a8a060');
+  reeds.forEach((a, i) => { const rr = Rw + 0.05 + rnd() * 0.35, s = 2.2 + rnd() * 1.6;
+    m4.compose(p3.set(Math.sin(a) * rr, -HT - 0.05, Math.cos(a) * rr), q.setFromEuler(e.set(0, rnd() * 6.3, 0)), sc.set(s * 0.8, s * (1.2 + rnd() * 0.6), s * 0.8)); reed.setMatrixAt(i, m4);
+    reed.setColorAt(i, tmp.copy(cR).lerp(cR2, rnd())); });
+  reed.name = 'island-reeds'; g.add(reed);
+  // ---- 水中礁石：島後方 2–3 塊半露出水面的岩塊 ----
+  const nRf = 2 + Math.floor(rnd() * 2), reef = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), lpCel(T.up2, { flat: true }), nRf);
+  for (let i = 0; i < nRf; i++) { let a = Math.PI * (0.65 + rnd() * 0.7); if (near(a, dockDeg, 40)) a += Math.PI * 0.5; const rr = Rw + 0.9 + rnd() * 1.2, s = 0.35 + rnd() * 0.4;
+    m4.compose(p3.set(Math.sin(a) * rr, -HT + s * 0.15, Math.cos(a) * rr), q.setFromEuler(e.set(rnd(), rnd() * 6, rnd())), sc.set(s * 1.4, s * 0.8, s)); reef.setMatrixAt(i, m4); }
+  reef.name = 'island-reefs'; g.add(reef);
+  // ---- 崖柏：從崖面斜伸出去的虯曲老幹＋扁平葉團（避開碼頭） ----
+  const cliffAt = (a, t, o = 0) => { const rr = R * lpCliffProfile(t) * 1.06 + o; return new V(Math.sin(a) * rr, -0.1 - t * H, Math.cos(a) * rr); };
+  const trunks = [], leaves = [];
+  for (let i = 0; i < 2; i++) {
+    let a = (i ? 0.33 : -0.33) * Math.PI * 2 + (rnd() - 0.5) * 0.4; if (near(a, dockDeg, 35)) a += Math.PI * 0.45;
+    const t = 0.08 + rnd() * 0.12, base = cliffAt(a, t, -0.4), o = new V(Math.sin(a), 0, Math.cos(a)), L = 0.9 + rnd() * 0.5, dir = o.clone().multiplyScalar(0.9).add(new V(0, 0.35 + rnd() * 0.2, 0)).normalize();
+    const mid = base.clone().addScaledVector(dir, L * 0.5).add(new V(0, -0.12, 0)), tip = base.clone().addScaledVector(dir, L);
+    trunks.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([base, mid, tip]), 8, 0.06, 5));
+    for (let k = 0; k < 4; k++) { const u = 0.45 + k * 0.18, c0 = base.clone().addScaledVector(dir, L * u).addScaledVector(o, (k % 2 ? 0.25 : -0.05)).add(new V((rnd() - 0.5) * 0.4, 0.06, (rnd() - 0.5) * 0.4));
+      const sz = 0.26 + rnd() * 0.1 - k * 0.03; leaves.push([c0, sz * 0.8]);
+      for (const sd of [-1, 1]) leaves.push([c0.clone().add(new V(sd * sz * 0.5, -0.03 + rnd() * 0.05, (rnd() - 0.5) * sz * 0.5)), sz * (0.45 + rnd() * 0.15)]); }
+  }
+  const trunkM = new THREE.Mesh(BGU.mergeGeometries(trunks), lpCel('#5a4a3c', { flat: true })); trunkM.name = 'island-pines'; g.add(trunkM);
+  const leaf = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 14, 7), lpCel('#ffffff'), leaves.length), cP = C(T.pine);
+  leaves.forEach(([c0, s], i) => { m4.compose(c0, q.setFromEuler(e.set(0, rnd() * 3, 0)), sc.set(s * 1.3, s * 0.3, s)); leaf.setMatrixAt(i, m4); leaf.setColorAt(i, tmp.copy(cP).multiplyScalar(0.85 + rnd() * 0.3)); });
+  leaf.name = 'island-pineleaves'; g.add(leaf);
+  // ---- 水線：白沫泥沙環＋兩圈往外擴的漣漪 ----
+  const wy = -HT + 0.02, foam = new THREE.Mesh(new THREE.CircleGeometry(Rw / 0.69, 64).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: lpFoamTex(), color: T.mist, transparent: true, depthWrite: false, toneMapped: false }));
+  foam.position.y = wy; foam.name = 'island-foam'; foam.renderOrder = 1; g.add(foam);
+  const rings = [0, 1].map(() => { const m = new THREE.Mesh(new THREE.RingGeometry(0.97, 1, 64).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#f4f6ee', transparent: true, opacity: 0, depthWrite: false, toneMapped: false }));
+    m.position.y = wy + 0.01; m.name = 'island-ripple'; m.renderOrder = 2; g.add(m); return m; });
+  const path = [at(Math.min(3.4, rTop - 0.9), 0), at(rTop, 0), at(rBot, deckY), at(rEnd - 0.25, deckY)];
+  g.userData.water = -HT; g.userData.depth = H;
+  g.userData.dock = { deg: dockDeg, out: out.clone(), side, path, end: path[3].clone(), deckY };
+  g.userData.anim = (dt, t) => rings.forEach((m, i) => { const u = (t * 0.12 + i * 0.5 + s0) % 1; m.scale.setScalar(Rw * (1.02 + u * 0.55)); m.material.opacity = 0.4 * Math.sin(Math.PI * u); });
+  g.traverse(o => { o.raycast = () => {}; }); // 島身不擋點選與取景
   return g;
 }
 

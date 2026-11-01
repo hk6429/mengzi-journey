@@ -44,7 +44,7 @@ for (const who of WHO) {
 
 test('預設姿勢與道具：孟子捧竹簡、舜扶耒、傅說持杵、膠鬲提魚簍、管仲戴枷、兵持戈、船夫撐篙；拱手收起；sit 座高、scale', () => {
   const shown = c => { const s = []; c.traverse(o => { if (o.isMesh && o.visible && o.userData.prop) s.push(o.userData.prop); }); return s.sort().join(','); };
-  const want = { mengzi: 'slips', shun: 'plough', fuyue: 'pestle', jiaoge: 'fishbasket', guanzhong: 'cangue', baili: 'sheepskin', soldier: 'ge', boatman: 'pole', minister: '' };
+  const want = { mengzi: 'slips', shun: '', fuyue: '', jiaoge: 'fishbasket', guanzhong: 'cangue', baili: 'sheepskin', soldier: 'ge', boatman: 'pole', minister: '' };
   for (const [who, p] of Object.entries(want)) assert.equal(shown(lpChibi({ who })), p, who);
   const m = lpChibi({ who: 'mengzi' }); m.userData.setPose('talk'); assert.equal(shown(m), 'slips'); m.userData.setPose('bow'); assert.equal(shown(m), '');
   m.userData.setPose('pole'); assert.equal(shown(m), 'pole'); m.userData.setPose('walk'); assert.equal(shown(m), 'slips');

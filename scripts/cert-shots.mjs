@@ -1,11 +1,11 @@
-// 證書用照片：node scripts/cert-shots.mjs [網址=http://127.0.0.1:8823/] [輸出資料夾=public/cert]
-// 產出 <輸出>/hero.jpg（主角周敦頤正面特寫）與 <輸出>/<pid>.jpg（八片大荷葉斜前方特寫：葉面＋荷花＋青蛙），每張 600×600、≤120KB
-// 荷葉平鋪水面，從右前方 30°、仰角 38° 看才看得到葉面
+// 證書用照片：node scripts/cert-shots.mjs [網址=http://127.0.0.1:8885/] [輸出資料夾=public/cert]
+// 產出 <輸出>/hero.jpg（主角孟子正面特寫）與 <輸出>/<pid>.jpg（六座河中島斜前方特寫：島面人物＋斧劈崖壁），每張 600×600、≤120KB
+// 從右前方 30°、仰角 38° 看，島面與崖壁都看得到
 // 畫面：隱藏介面與名牌、viewInsets 歸零，用 window.__ctx 操作鏡頭（不生圖、不用原著插畫）
 import { chromium } from 'playwright';
 import fs from 'node:fs';
-const base = process.argv[2] || 'http://127.0.0.1:8823/', dir = process.argv[3] || 'public/cert';
-const ids = ['baihua', 'ju', 'mudan', 'yuni', 'jing', 'xiang', 'pin', 'lianxi'];
+const base = process.argv[2] || 'http://127.0.0.1:8885/', dir = process.argv[3] || 'public/cert';
+const ids = ['fields', 'market', 'road', 'bridge', 'study', 'city'];
 fs.mkdirSync(dir, { recursive: true });
 const b = await chromium.launch({ args: ['--use-angle=metal', '--enable-gpu'] });
 // 1000×1000 CSS px（避開 ≤900px 的手機取景偏移）× 0.6 ＝ 600×600 輸出
@@ -28,7 +28,7 @@ async function shot(pid, out, hero) {
     x.controls.minDistance = 0; // 縮放下限會把特寫夾遠
     x.controls.target.copy(tgt); x.camera.position.copy(tgt).add(B.set(u[0] * d, u[1] * d, u[2] * d)); x.camera.lookAt(tgt); x.controls.update();
   });
-  else await p.evaluate(pid => { // 荷葉特寫：整片葉子放進畫面
+  else await p.evaluate(pid => { // 島特寫：整座島面放進畫面
     const x = window.__ctx, V = x.camera.position.constructor, g = x.planetById.get(pid).group, d = 19, e = 38 * Math.PI / 180, a = 30 * Math.PI / 180;
     const tgt = g.getWorldPosition(new V()).add(new V(0, 0.4, 0.8));
     x.controls.target.copy(tgt); x.camera.position.copy(tgt).add(new V(Math.sin(a) * Math.cos(e) * d, Math.sin(e) * d, Math.cos(a) * Math.cos(e) * d)); x.camera.lookAt(tgt); x.controls.update();
@@ -40,7 +40,7 @@ async function shot(pid, out, hero) {
   console.log((kb <= 120 ? '✓ ' : '✗ 超過 120KB ') + out, kb.toFixed(0) + 'KB');
   if (kb > 120) process.exitCode = 1;
 }
-await shot('baihua', dir + '/hero.jpg', true);
+await shot('fields', dir + '/hero.jpg', true);
 for (const id of ids) await shot(id, `${dir}/${id}.jpg`, false);
 console.log(errs.length ? '錯誤：' + errs.join(' | ') : '（無錯誤）');
 await b.close();

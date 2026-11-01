@@ -13,7 +13,7 @@
 //   baili 百里奚（春秋秦）：白髮老人、臂上搭羊皮
 //   scholar 戰國士人／學生（seed 換衣色）、craftsman 工匠（幅巾短衣）、soldier 守城兵（皮甲＋戈，預設 'spear'）、
 //   minister 大臣（高冠寬袖，預設 'bow'）、boatman 船夫（斗笠短褐、撐竹篙，預設 'pole'）
-// pose：stand sit walk wave point bow hold surprised read write basket pick reach，本作加 plough（扶耒）tamp（夯土）carry（扛木：雙手上舉托肩上重物，木頭 A/B 自備）
+// pose：stand sit walk wave point bow hold surprised read write basket pick reach，本作加 plough（扶耒）tamp（夯土）carry（craftsman＝雙手前伸腰高合抬木料；其他人＝握背帶背行囊；木料、包袱 A/B 自備）；耒耜、夯杵也由 A 自備，plough／tamp 只做手勢
 //       bound（戴枷）talk（說話比手勢）spear（持戈）pole（撐篙）
 // 補充：
 //   - pose 'sit'／'write' 的臀部在 c.userData.seatY（已含 scale），A/B 把人放到座位高度 − seatY 即可。
@@ -292,10 +292,10 @@ function chConfig(who, outfit, seed, colors = {}) {
         fs: M({ eyeS: 0.9, blush: 0.36 }) },
         { top: '#3f5d6a', bottom: '#3f5d6a', trim: '#a0623a', sash: '#e6d8b8', crown: '#2b2622', shoe: '#4a3a2e' });
     case 'shun':    // 舜：束髮、粗麻短衣、赤腳、扶耒耜
-      return cf({ cloth: 'kuzhe', hair: 'knot', bangs: 'short', rolled: true, prop: 'plough', pose: 'plough', beard: '#3a3430', beardS: 0.45, fs: M({ blush: 0.45 }) },
+      return cf({ cloth: 'kuzhe', hair: 'knot', bangs: 'short', rolled: true, pose: 'plough', beard: '#3a3430', beardS: 0.45, fs: M({ blush: 0.45 }) },
         { top: '#c2ad84', pants: '#9a8a68', sash: '#6b5a48', trim: '#e8dcc0', shoe: '#efcfb2', skin: '#efcfb2' });
     case 'fuyue':   // 傅說：短衣束腰、捲褲管、持夯杵
-      return cf({ cloth: 'kuzhe', hair: 'knot', bangs: 'short', rolled: true, prop: 'pestle', pose: 'tamp', fs: M({ blush: 0.42, stern: true }) },
+      return cf({ cloth: 'kuzhe', hair: 'knot', bangs: 'short', rolled: true, pose: 'tamp', fs: M({ blush: 0.42, stern: true }) },
         { top: '#9a8462', pants: '#6f6250', sash: '#3a3128', trim: '#e2d4b4', shoe: '#5a4636', skin: '#ecc9a8' });
     case 'jiaoge':  // 膠鬲：販魚鹽的人，幅巾短衣、提魚簍
       return cf({ cloth: 'kuzhe', hat: 'kerchief', hair: 'knot', bangs: 'short', prop: 'fishbasket', pose: 'basket', beard: '#3a3430', beardS: 0.5, fs: M({ blush: 0.4 }) },
@@ -739,16 +739,17 @@ function lpChibi(spec = {}) {
     reach: { L: [-0.3, 0.35], R: [-2.0, -0.12], nod: -0.12 },              // 右手往前上方伸
     plough: { L: [-0.95, -0.12], R: [-0.95, 0.12], lean: 0.2, nod: 0.12 },   // 雙手往前下方扶耒、身體前傾
     tamp: { L: [-1.35, -0.32], R: [-1.35, 0.32], nod: 0.06 },               // 雙手握夯杵上段
-    carry: { L: [-2.7, 0.32], R: [-2.7, -0.32], lean: -0.04 },               // 雙手上舉托肩上重物
+    carry: { L: [-1.05, -0.12], R: [-1.05, 0.12], lean: 0.04 },             // 雙手往前伸、腰高托住合抬的木料（木料在 z+0.2、y 0.33）
     bound: { L: [-0.75, -0.45], R: [-0.75, 0.45], nod: 0.14 },               // 雙手在木枷下
     talk: { L: [0.04, 0.24], R: [-0.95, -0.35], nod: -0.04 },                // 右手前伸比手勢
     spear: { L: [0.04, 0.24], R: [-0.45, -0.1] },                            // 右手持戈直立
     pole: { L: [-1.0, -0.1], R: [-0.75, 0.2], lean: 0.12 }                   // 雙手握篙、身體前傾使力
   };
-  const POSE_PROP = { read: 'book', write: 'brush', basket: cf0.prop === 'fishbasket' || cf0.prop === 'sheepskin' ? cf0.prop : 'basket', bow: null, reach: null, carry: null,
-    plough: 'plough', tamp: 'pestle', spear: 'ge', pole: 'pole', bound: 'cangue', talk: cf0.prop === 'slips' ? 'slips' : null };
+  const POSE_PROP = { read: 'book', write: 'brush', basket: cf0.prop === 'fishbasket' || cf0.prop === 'sheepskin' ? cf0.prop : 'basket', bow: null, reach: null, carry: null, hold: null,
+    plough: null, tamp: null, spear: 'ge', pole: 'pole', bound: 'cangue', talk: cf0.prop === 'slips' ? 'slips' : null };
   function applyPose() {
-    const P = POSES[st.pose] || POSES.stand, lg = P.leg || [0, 0], spread = cf0.cloth === 'kuzhe' ? 1 : 0.2;
+    // carry：工匠＝雙手前伸合抬木料（B 站 4）；其他人＝雙手握胸前背帶背行囊（A 站 3，包袱 A 自備）
+    const P = st.pose === 'carry' && who !== 'craftsman' ? { L: [-0.55, -0.42], R: [-0.55, 0.42] } : POSES[st.pose] || POSES.stand, lg = P.leg || [0, 0], spread = cf0.cloth === 'kuzhe' ? 1 : 0.2;
     R.armL.rotation.set(P.L[0], 0, P.L[1]); R.armR.rotation.set(P.R[0], 0, P.R[1]);
     R.legL.rotation.set(lg[0] * (spread < 1 ? 0.4 : 1), 0, lg[1] * spread); R.legR.rotation.set(lg[0] * (spread < 1 ? 0.4 : 1), 0, -lg[1] * spread);
     R.pivot.rotation.x = P.lean || 0; R.head.rotation.x = P.nod || 0;
