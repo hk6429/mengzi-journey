@@ -1,7 +1,7 @@
 // ================= UI（D 線）：故事卡（原文＋白話）、元素小卡、路線列、過場字幕、旅程結尾 =================
 const UI_KIND = { character: '角色', building: '建築', scene: '場景' };
-const UI_LS = 'als-v1';
-// 站間移動＝騎青蛙在荷葉間跳躍（C 線），前往下一站的按鈕一律「騎蛙跳往〇〇」
+const UI_LS = 'mengzi-v2';
+// 站間移動＝乘扁舟沿航道划到下一島（C 線），前往下一站的按鈕一律「乘舟前往〇〇」
 const UI_HOME_MS = 15000; // 等 C 線 home 事件的上限
 // 手機版型：直向 ≤900px（含 iPad 直向）或橫向矮螢幕觸控
 const UI_LAND = '(max-height: 500px) and (pointer: coarse)';
@@ -42,7 +42,7 @@ function initUI(ctx) {
     b.type = 'button'; b.className = 'ui-stop'; b.dataset.id = p.id;
     b.innerHTML = `<span class="n">${p.num}</span><span class="t"></span><span class="c" aria-hidden="true" data-n="${P.indexOf(p) + 1}"></span>`;
     b.querySelector('.t').textContent = p.name;
-    b.style.setProperty('--x', Math.round(Math.sin(Math.PI * P.indexOf(p) / (P.length - 1)) * 34) + 'px'); // 八站排成一道弧
+    b.style.setProperty('--x', Math.round(Math.sin(Math.PI * P.indexOf(p) / (P.length - 1)) * 34) + 'px'); // 六站排成一道弧
     b.onclick = () => { if (done(p.id) && !ctx.flying && p.id !== S.pid) { if (mq.matches) uiRouteOpen(false); ctx.goPlanet(p.id); } };
     li.appendChild(b); list.appendChild(li);
   });
@@ -56,7 +56,7 @@ function initUI(ctx) {
     $('ui-mini').innerHTML = P.map(p => `<i class="${p.id === S.pid ? 'here' : done(p.id) ? 'on' : ''}"></i>`).join('');
     uiPath();
   }
-  // 墨線路線：用 Catmull-Rom 曲線把八個站點串起來，兩端都拜訪過的那段描成朱砂，朱印標在目前站
+  // 墨線路線：用 Catmull-Rom 曲線把六個站點串起來，兩端都拜訪過的那段描成朱砂，朱印標在目前站
   function uiPath() {
     const svg = $('ui-path-svg'), box = svg.parentNode.getBoundingClientRect(); if (!box.height) return;
     const pts = [...list.querySelectorAll('.ui-stop .c')].map(c => { const r = c.getBoundingClientRect(); return [r.left + r.width / 2 - box.left, r.top + r.height / 2 - box.top]; });
@@ -105,7 +105,7 @@ function initUI(ctx) {
     const best = st.quiz[p.id], qg = $('ui-quiz-go'); qg.hidden = !end || !quizOf(p.id).length;
     qg.textContent = best == null ? `做本站測驗（${quizOf(p.id).length} 題）` : `本站測驗 ${best}／${quizOf(p.id).length}・` + (passed(p.id) ? '已過關，再考一次' : '未過關，再考一次');
     const go = $('ui-go'); go.hidden = !end;
-    go.textContent = nx ? '騎蛙跳往' + nx.name : '回到濂溪書堂，結束旅程';
+    go.textContent = nx ? '乘舟前往' + nx.name : '回望六島，結束旅程';
     uiVoiceBtn();
   }
   // 只更新朗讀鈕（朗讀清單晚到時用，不整張重畫）
@@ -164,7 +164,7 @@ function initUI(ctx) {
     audio.src = `voice/${k}.mp3`;
     audio.play().then(() => uiPressed(true)).catch(() => uiStop());
   }
-  // 換段後若鏡頭要特寫元素，等周敦頤走到旁邊（C 線 emit('walked', {planet, el})）再念；最多等 UI_WALK_MS
+  // 換段後若鏡頭要特寫元素，等孟子走到旁邊（C 線 emit('walked', {planet, el})）再念；最多等 UI_WALK_MS
   function uiPlayAfterWalk() {
     const p = planet(), el = p && !isGu() && (p.shots || [])[S.i];
     if (!el || ctx.reduced) return uiPlay();
@@ -187,7 +187,7 @@ function initUI(ctx) {
     if (typeof ctx.goHome !== 'function') return uiEndOpen();
     if (ctx.flying || S.home) return;
     const p = planet(); uiStop(); uiElClose(); uiCollapse(true);
-    $('ui-cap-txt').textContent = (p && p.next) || '青蛙載著我，一葉一葉跳回濂溪書堂……'; $('ui-caption').hidden = false;
+    $('ui-cap-txt').textContent = (p && p.next) || '扁舟停在城下，回頭望見六座河島……'; $('ui-caption').hidden = false;
     S.home = setTimeout(uiHomed, UI_HOME_MS);
     try { ctx.goHome(); } catch (e) { console.error(e); uiHomed(); }
   }
@@ -199,11 +199,11 @@ function initUI(ctx) {
     const on = !$('ui-quiz').hidden || !$('ui-end').hidden;
     ['.ui-top', '#ui-card', '#ui-route', '#ui-el', '#ui-caption', '#app'].forEach(q => { const e = document.querySelector(q); if (e) e.inert = on; });
   }
-  $('ui-adults').innerHTML = DATA.adults.map(() => '<tr><th scope="row"></th><td data-h="象徵哪種人"></td><td data-h="誰愛它・作者的感嘆"></td></tr>').join(''); // data-h：手機堆疊時當欄名
+  $('ui-adults').innerHTML = DATA.adults.map(() => '<tr><th scope="row"></th><td data-h="原本的處境"></td><td data-h="後來被誰任用"></td></tr>').join(''); // data-h：手機堆疊時當欄名
   $('ui-adults').querySelectorAll('tr').forEach((tr, k) => { const a = DATA.adults[k]; [a.who, a.cares, a.prince].forEach((t, j) => { tr.children[j].textContent = t; }); });
   function uiEndClose() {
     $('ui-end').hidden = true; uiModal(); if (!card.hidden) uiCollapse(false);
-    // 焦點回到開啟它的元素；看不見就退到「騎蛙跳往」或「證書」鈕
+    // 焦點回到開啟它的元素；看不見就退到「乘舟前往」或「證書」鈕
     const seen = e => e && e.isConnected && !e.closest('[inert]') && e.getClientRects().length > 0;
     const f = [S.endFrom, $('ui-go'), $('ui-cert-btn')].find(seen); if (f) f.focus({ preventScroll: true });
   }
@@ -268,7 +268,7 @@ function initUI(ctx) {
     if (!cap.hidden) return;
     uiStop(); uiElClose(); uiQuizOpen(false); uiCollapse(true);
     const from = P.find(p => p.id === (e && e.from));
-    $('ui-cap-txt').textContent = (from && from.next) || '青蛙一蹬腿，往下一片荷葉跳去……'; cap.hidden = false;
+    $('ui-cap-txt').textContent = (from && from.next) || '船夫撐起竹篙，往下一座島划去……'; cap.hidden = false;
   });
   // 略過路程：C 線若提供 ctx.skipFlight 就用；否則送 Esc（scene 已監聽 Esc 略過）
   $('ui-skip').onclick = () => { if (typeof ctx.skipFlight === 'function') ctx.skipFlight(); else dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); };
@@ -296,7 +296,7 @@ function initUI(ctx) {
 
   // ---------- 繪本封面：?planet=、?auto=1 時略過 ----------
   function uiCoverSet(on) { S.cover = on; ui.classList.toggle('is-cover', on); $('ui-cover').hidden = !on; uiInsets(); if (!on) { uiPath(); uiShot(true); } }
-  // 封面「出發」→ 出發前導讀卡 →「騎蛙出發」才開始
+  // 封面「出發」→ 出發前導讀卡 →「乘舟出發」才開始
   $('ui-start').onclick = () => { $('ui-start').parentNode.hidden = true; $('ui-intro').hidden = false; $('ui-intro-h').focus({ preventScroll: true }); };
   $('ui-intro-go').onclick = () => { uiCoverSet(false); $('ui-name').focus({ preventScroll: true }); };
 
@@ -373,7 +373,7 @@ function initUI(ctx) {
     });
     if (z.done) {
       const r = $('ui-quiz-res'), ok = z.score >= PASS; r.className = 'ui-quiz-res ' + (ok ? 'is-ok' : 'is-bad');
-      r.textContent = ok ? `答對 ${z.score}／${z.items.length} 題，本站過關！` + (allDone() ? '八站全部過關，可以領證書了。' : `已過關 ${quizN()}／${P.length} 站。`)
+      r.textContent = ok ? `答對 ${z.score}／${z.items.length} 題，本站過關！` + (allDone() ? '六站全部過關，可以領證書了。' : `已過關 ${quizN()}／${P.length} 站。`)
         : `答對 ${z.score}／${z.items.length} 題，還差 ${PASS - z.score} 題才過關。看看解析，再考一次吧（選項會重新洗牌）。`;
     } else uiQuizCount();
   }
@@ -397,21 +397,21 @@ function initUI(ctx) {
   // ---------- 證書（兩版：文言「結業狀」／白話「結業證書」；預設跟著古文｜白話模式，表單可改） ----------
   const certVer = () => S.certVer || st.mode;
   const CERT = {
-    gu: { title: '結業狀', label: '文言版', hello: '茲有', fallback: '無名氏', file: 'ailianshuo-jieyezhuang.png',
-      lines: ['誦讀〈愛蓮說〉，隨茂叔乘蛙，躍蓮葉、渡仙池，', '觀水陸百花，過東籬之菊、長安之牡丹，見蓮出淤泥而不染，', '八站皆通，知君子之可貴。特頒此狀，以資嘉勉。'] },
-    bai: { title: '結業證書', label: '白話版', hello: '恭喜', fallback: '小小旅人', file: 'ailianshuo-certificate.png',
-      lines: ['跟著周敦頤騎著大青蛙，跳完〈愛蓮說〉八片大荷葉，', '從水陸百花、東籬黃菊、長安牡丹，到出淤泥而不染的蓮；', '讀了原文，也完成每站測驗，特頒此證書。'] }
+    gu: { title: '結業狀', label: '文言版', hello: '茲有', fallback: '無名氏', file: 'mengzi-jieyezhuang.png',
+      lines: ['誦讀《孟子・告子下》，隨孟子乘舟，渡大河、歷六島，', '觀舜與傅說之所發，知降大任者必先苦其心志，', '六站皆通，明生於憂患、死於安樂之理。特頒此狀，以資嘉勉。'] },
+    bai: { title: '結業證書', label: '白話版', hello: '恭喜', fallback: '小小旅人', file: 'mengzi-certificate.png',
+      lines: ['跟著孟子乘著扁舟，走完〈生於憂患，死於安樂〉六座河島，', '從六個人的起點、困境中的磨練，一路讀到國家的興亡；', '讀了原文，也完成每站測驗，特頒此證書。'] }
   };
   function uiCertVer() {
     const v = certVer();
     $('ui-cert-ver-gu').setAttribute('aria-pressed', String(v === 'gu')); $('ui-cert-ver-bai').setAttribute('aria-pressed', String(v !== 'gu'));
-    $('ui-cert-img').alt = '你的愛蓮說蓮池蛙躍' + CERT[v].title;
+    $('ui-cert-img').alt = '你的孟子憂患之旅' + CERT[v].title;
   }
   function uiCert() {
     const n = quizN(), all = allDone();
     $('ui-cert-need').hidden = all; $('ui-cert-form').hidden = !all;
-    $('ui-cert-need').textContent = `八站測驗都過關（每站五題，答對 ${PASS} 題以上），就能領取證書（文言版「結業狀」或白話版「結業證書」）。目前 ${n}／${P.length} 站。`;
-    $('ui-cert-score').textContent = `八站總分 ${total()}／${totalN()}`;
+    $('ui-cert-need').textContent = `六站測驗都過關（每站五題，答對 ${PASS} 題以上），就能領取證書（文言版「結業狀」或白話版「結業證書」）。目前 ${n}／${P.length} 站。`;
+    $('ui-cert-score').textContent = `六站總分 ${total()}／${totalN()}`;
     $('ui-cert-name').value = st.name; uiCertVer();
     $('ui-cert-btn').textContent = all ? '證書 ★' : `證書 ${n}/${P.length}`;
     $('ui-cert-btn').setAttribute('aria-label', all ? '證書：可以領取了' : `證書：已過關 ${n} 站，共 ${P.length} 站`);
@@ -455,7 +455,7 @@ function initUI(ctx) {
     g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.fillStyle = ink;
     const sp = gu ? 90 : 40;
     g.font = `700 150px ${F}`; if ('letterSpacing' in g) g.letterSpacing = sp + 'px'; g.fillText(T.title, W / 2 + sp / 2, 300); if ('letterSpacing' in g) g.letterSpacing = '0px';
-    g.font = `600 52px ${F}`; g.fillStyle = red; g.fillText('〈愛蓮說〉蓮池蛙躍', W / 2, 382);
+    g.font = `600 52px ${F}`; g.fillStyle = red; g.fillText('《孟子・告子下》憂患之旅', W / 2, 382);
     const fit = (txt, size, maxW, style = '') => { let s = size; do { g.font = `${style} ${s}px ${F}`; s -= 2; } while (g.measureText(txt).width > maxW && s > 20); };
     const photo = (im, x, y, r, color) => {
       g.save(); g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.closePath(); g.fillStyle = color; g.fill(); g.clip();
@@ -464,19 +464,19 @@ function initUI(ctx) {
       g.strokeStyle = ink; g.lineWidth = 7; g.beginPath(); g.arc(x, y, r + 5, 0, Math.PI * 2); g.stroke();
       g.strokeStyle = 'rgba(192,57,43,.8)'; g.lineWidth = 3; g.beginPath(); g.arc(x, y, r + 20, 0, Math.PI * 2); g.stroke();
     };
-    // 左：周敦頤大圓照
+    // 左：孟子大圓照
     photo(imgs[0], 560, 880, 320, '#a0623a');
-    g.fillStyle = ink; g.font = `600 58px ${F}`; g.fillText('周敦頤', 560, 1294);
+    g.fillStyle = ink; g.font = `600 58px ${F}`; g.fillText('孟子', 560, 1294);
     const tt = total(), tn = totalN();
     g.fillStyle = red; g.font = `700 50px ${F}`; g.fillText(gu ? `總分　${cnNum(tn)}題中${cnNum(tt)}` : `總分 ${tt}／${tn}`, 560, 1384);
-    // 右：名字、內文、八站成績（四個一排）
+    // 右：名字、內文、六站成績（三個一排）
     const cx = 1640, name = (st.name || '').trim() || T.fallback;
     g.fillStyle = ink2; g.font = `48px ${F}`; g.fillText(T.hello, cx, 492);
     g.fillStyle = ink; fit(name, 128, 1200, '700'); g.fillText(name, cx, 628);
     g.strokeStyle = 'rgba(43,38,34,.55)'; g.lineWidth = 3; g.beginPath(); g.moveTo(cx - 600, 664); g.lineTo(cx + 600, 664); g.stroke();
     g.fillStyle = ink; T.lines.forEach((t, i) => { fit(t, 44, 1260); g.fillText(t, cx, 734 + i * 58); });
     P.forEach((p, i) => {
-      const x = cx + (i % 4 - 1.5) * 310, y = i < 4 ? 975 : 1290, best = st.quiz[p.id], n = quizOf(p.id).length;
+      const x = cx + (i % 3 - 1) * 380, y = i < 3 ? 975 : 1290, best = st.quiz[p.id], n = quizOf(p.id).length;
       photo(imgs[i + 1], x, y, 80, p.color);
       g.fillStyle = ink; fit(p.name, 38, 280, '600'); g.fillText(p.name, x, y + 138);
       g.fillStyle = red; g.font = `600 32px ${F}`;
@@ -488,10 +488,10 @@ function initUI(ctx) {
     g.fillStyle = ink2; g.font = `40px ${F}`;
     g.textAlign = 'left'; g.fillText(date, 300, 1600);
     g.textAlign = 'right'; g.fillText((gu ? '製者　' : '製作：') + DATA.author.name, W - 300, 1600);
-    // 朱印「君子」
+    // 朱印「憂患」
     g.save(); g.translate(W / 2, 1590); g.rotate(-0.05); g.fillStyle = 'rgba(192,57,43,.9)'; g.fillRect(-64, -64, 128, 128);
     g.strokeStyle = '#f3ead6'; g.lineWidth = 4; g.strokeRect(-54, -54, 108, 108);
-    g.fillStyle = '#f3ead6'; g.textAlign = 'center'; g.font = `700 50px ${F}`; g.fillText('君', 0, -6); g.fillText('子', 0, 46); g.restore();
+    g.fillStyle = '#f3ead6'; g.textAlign = 'center'; g.font = `700 50px ${F}`; g.fillText('憂', 0, -6); g.fillText('患', 0, 46); g.restore();
     return c;
   }
   // 證書 PNG 依「版本＋名字（＋成績）」快取：打開就先畫好，按鈕一按就能叫出分享面板（Safari 的使用者手勢有時效）
@@ -530,7 +530,7 @@ function initUI(ctx) {
   $('ui-cert-print').onclick = async () => {
     const btn = $('ui-cert-print'); if (btn.disabled) return; btn.disabled = true;
     try {
-      const ver = certVer(), b = await uiCertBlob(ver), pr = $('ui-print'), im = new Image(); im.alt = '愛蓮說蓮池蛙躍' + CERT[ver].title;
+      const ver = certVer(), b = await uiCertBlob(ver), pr = $('ui-print'), im = new Image(); im.alt = '孟子憂患之旅' + CERT[ver].title;
       await new Promise(r => { im.onload = r; im.src = URL.createObjectURL(b); }); pr.textContent = ''; pr.appendChild(im); print();
     } catch (e) { console.error(e); $('ui-cert-msg').textContent = '抱歉，證書畫不出來。'; }
     btn.disabled = false;

@@ -2,7 +2,7 @@
   "name": "ailianshuo-journey",
   "version": "0.1.0",
   "private": true,
-  "description": "愛蓮說・濂溪泛舟：化身周敦頤划舟訪花，八站 3D 繪本，古文白話切換、朗讀、測驗與證書",
+  "description": "孟子・憂患之旅：化身孟子乘扁舟走訪六座河島，〈生於憂患，死於安樂〉六站 3D 古文繪本，古文白話切換、朗讀、測驗與證書",
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
