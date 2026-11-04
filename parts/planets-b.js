@@ -343,7 +343,7 @@
     const [bx0, bz0] = pt(214), bt = grp(wall, bx0, 0, bz0, faceTo(bx0, bz0, 0, 0));
     hangtu(bt, 0.95, 1.75, 0.95, 0, 0, 0, '#b08a5c', '#9c7a50');
     add(bt, lathe([[0.04, 0], [0.2, 0.06], [0.24, 0.18]], 12), '#4a4440', 0, 1.75, 0);
-    lpGlbSwap('beacon-tower', bt);   // 火與煙在後面另掛
+    lpGlbSwap('beacon-tower', bt, { fit: 2.3 });   // 火與煙在後面另掛（火盆 y=1.82）；GLB 比例矮胖，放寬寬度才能等高、火不懸空
     fire(P, bt, 0, 1.82, 0, 1.1);
     smoke(P, wall, bx0, 2.2, bz0, { n: 9, rise: 2.0, s0: 0.14, s1: 0.5, c: '#7d7670', op: 0.4, drift: [0.5, 0.6] });
     // 守城兵：牆頂、臉朝城內；旁邊一座戈架
@@ -363,7 +363,7 @@
     gable(gt, 1.1, 0.62, 0.42, 1.88, { c: COL.tile, tile: true, gableC: '#c9b48a' });
     for (const s of [-1, 1]) { const d = grp(gt, s * 0.4, 0, 0.3); d.rotation.y = s * 0.9; box(d, 0.4, 1.0, 0.05, '#7a3a2c', -s * 0.2, 0.5, 0); }
     for (const s of [-1, 1]) add(gt, new THREE.CylinderGeometry(0.03, 0.025, 0.3, 6), COL.woodDk, s * 0.8, 1.0, 0.52);
-    const city = lpGlbSwap('city-gate', bake(gt));   // 火把、守門兵在烘完後才加（anim 要指著實際 mesh、chibi 不烘）
+    const city = lpGlbSwap('city-gate', bake(gt));   // 火把、守門兵在烘完後才加（anim 要指著實際 mesh、chibi 不烘）；實測 GLB 牆面在火把處 z≈0.45–0.49，火把(0.52)已在牆前，不需 front
     for (const s of [-1, 1]) fire(P, city, s * 0.8, 1.14, 0.52, 0.45);
     who(P, city, { who: 'soldier', pose: 'spear', face: 'calm', seed: 2 }, 0.75, 0.75, 0);
     P.tag(city, 'gate');

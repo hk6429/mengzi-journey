@@ -867,23 +867,57 @@ function lpGlbLoad(name) {
   })());
   return lpGlbSrc.get(name);
 }
-// 立即回傳 Group：先放 fallback()，載到模型後換掉；等比縮放到 height、腳底貼 y=0、水平置中、yaw 度數旋轉；補上 P.tag 的 pick
-function lpGlb(name, { height = 1, width = 0, yaw = 0, fallback } = {}) {   // width>0：改用水平最大邊長等比縮放（扁平物件用）
+// 第七輪縮放（同 daminghu）：等高；但轉 yaw 後的寬／深不超過 fallback 外框的 fit 倍（GLB 比程式建模寬扁時改以底面為準）。
+// match：'x'｜'z' 長形物件（船、拒馬）改以該軸長度對齊。
+function lpGlbFit(h, fb, ms, yaw, fit, match) {
+  const a = yaw * Math.PI / 180, c = Math.abs(Math.cos(a)), n = Math.abs(Math.sin(a));
+  const ex = c * ms.x + n * ms.z, ez = n * ms.x + c * ms.z;
+  let s = match === 'z' ? fb.z / ez : match === 'x' ? fb.x / ex : h / ms.y;
+  if (fit && fb.x > 0 && ex > 0) s = Math.min(s, fit * fb.x / ex);
+  if (fit && fb.z > 0 && ez > 0) s = Math.min(s, fit * fb.z / ez);
+  return s;
+}
+// o.front：之後才加的匾額／對聯／告示（函式或陣列，換模當下才取）。GLB 比程式建模厚時會把它們吃進牆裡，
+//   換模後沿 obj 的 +z 朝前打射線，把它們往前推到 GLB 表面外 0.006。
+function lpGlbFront(obj, w, list) {
+  const d = new THREE.Vector3(0, 0, 1).transformDirection(obj.matrixWorld), rc = new THREE.Raycaster(), p = new THREE.Vector3(), L = 50;
+  w.updateMatrixWorld(true);
+  for (const f of list) {
+    f.updateMatrixWorld(true); f.getWorldPosition(p);
+    rc.set(p.clone().addScaledVector(d, L), d.clone().negate()); rc.far = L * 2;
+    const hit = rc.intersectObject(w, true)[0];
+    if (!hit) continue;
+    const push = L - hit.distance + 0.006 * obj.getWorldScale(new THREE.Vector3()).z;
+    if (push <= 0) continue;
+    const a = f.parent.worldToLocal(p.clone()), b = f.parent.worldToLocal(p.clone().addScaledVector(d, push));
+    f.position.add(b.sub(a));
+  }
+}
+// 立即回傳 Group：先放 fallback()，載到模型後才換掉（沒有 GLB 就完全不動）。
+// o.box（fallback 外框，群組局部座標）有給：lpGlbFit 縮放（fit／match／yaw）、底面貼 box.min.y（或 o.y0）、水平對齊外框中心；
+// 沒給：舊行為，等比縮放到 height（width>0 改以水平最大邊長）、腳底貼 y=0、水平置中。補上 P.tag 的 pick。
+function lpGlb(name, { height = 1, width = 0, yaw = 0, fallback, box, fit = 1.25, match, y0, front } = {}) {
   const g = new THREE.Group(); g.name = 'glb-' + name; g.userData.glbReady = false; g.userData.glbGroup = true;
   let fb = null;
   try { fb = typeof fallback === 'function' ? fallback() : null; } catch (e) { console.warn('[glb] fallback 失敗 ' + name, e); }
   if (fb && fb.isObject3D) g.add(fb);
   lpGlbLoad(name).then(src => {
     if (!src) return;
-    const m = src.clone(true), box = new THREE.Box3().setFromObject(m), size = box.getSize(new THREE.Vector3());
-    if (!(size.y > 0)) { lpGlbWarn(name, '模型沒有高度'); return; }
-    const s = width > 0 ? width / Math.max(size.x, size.z) : height / size.y, c = box.getCenter(new THREE.Vector3());
-    const w = new THREE.Group(); w.name = 'glb-model'; w.rotation.y = yaw * Math.PI / 180; w.add(m);
-    m.scale.multiplyScalar(s); m.position.set(-c.x * s, -box.min.y * s, -c.z * s);
+    const m = src.clone(true), mb = new THREE.Box3().setFromObject(m), ms = mb.getSize(new THREE.Vector3());
+    if (!(ms.y > 0)) { lpGlbWarn(name, '模型沒有高度'); return; }
+    const c = mb.getCenter(new THREE.Vector3()), w = new THREE.Group(); w.name = 'glb-model'; w.rotation.y = yaw * Math.PI / 180; w.add(m);
+    let s;
+    if (box && !box.isEmpty()) {
+      const bs = box.getSize(new THREE.Vector3()), bc = box.getCenter(new THREE.Vector3()), by = y0 !== undefined ? y0 : box.min.y;
+      s = lpGlbFit(height || box.max.y - by, bs, ms, yaw, fit, match);
+      w.position.set(bc.x, by, bc.z);
+    } else s = width > 0 ? width / Math.max(ms.x, ms.z) : height / ms.y;
+    m.scale.multiplyScalar(s); m.position.set(-c.x * s, -mb.min.y * s, -c.z * s);
     let pk = null; for (let a = g; a && !pk; a = a.parent) pk = a.userData.pick;   // 第七輪：P.tag 可能標在外層（lpGlbSwap）
     m.traverse(o => { if (o.isMesh && pk) o.userData.pick = pk; });
     if (fb) g.remove(fb);
     g.add(w); g.userData.glbReady = true; LP_GLB_GEN++;
+    if (front && g.parent) lpGlbFront(g.parent, w, typeof front === 'function' ? front() : front);
   });
   return g;
 }
@@ -893,15 +927,18 @@ function lpBakeWalk(root, f, keep) { const w = o => { if (o !== root && o.userDa
 // 第七輪（Dzine 全面換 GLB）：把「已放好位置」的程式建模群組 obj 換成 models/<name>.glb。
 // obj 的子物件整批收進 fallback（obj 自己的位置／旋轉／縮放保留），所以沒有 GLB 時畫面與原本完全一樣；
 // 有 GLB 就等比縮到 o.height（預設＝程式建模本身的高度 max.y，原點須在底面中心、正面 +z）。obj 須是 Group，且之後不可再被 bake。
+// o：fit（預設 1.25；'w'＝扁平物件，改以外框較長的水平軸對齊）、match 'x'｜'z'、yaw、y0、height、front（見 lpGlb）。
 function lpGlbSwap(name, obj, o = {}) {
   if (!obj || !obj.isObject3D || obj.isMesh) return obj;
   const fb = new THREE.Group(); fb.name = 'glb-fb-' + name;
   [...obj.children].forEach(c => fb.add(c));
   fb.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(fb);
-  const height = o.height || (box.isEmpty() || !(box.max.y > 0) ? 1 : box.max.y);
-  const width = o.fit === 'w' && !box.isEmpty() ? Math.max(box.max.x - box.min.x, box.max.z - box.min.z) : 0;   // fit:'w'＝扁平物件照水平長度縮
-  obj.add(lpGlb(name, { height, width, yaw: o.yaw || 0, fallback: () => fb }));
+  if (box.isEmpty()) { obj.add(fb); return obj; }
+  const bs = box.getSize(new THREE.Vector3());
+  let fit = o.fit === undefined ? 1.25 : o.fit, match = o.match;
+  if (fit === 'w') { fit = 1.25; match = match || (bs.x >= bs.z ? 'x' : 'z'); }
+  obj.add(lpGlb(name, { box, height: o.height || 0, yaw: o.yaw || 0, fit, match, y0: o.y0, front: o.front, fallback: () => fb }));
   return obj;
 }
 
@@ -2276,7 +2313,7 @@ function lpChibi(spec = {}) {
     A(fs, G.box(1.25, 0.02, 0.03), M(C.bambooDk), [0, 1.25, 0.32]);   // 曬魚竹竿＋四條掛魚
     inst(fs, once('fishV', () => fishGeo().clone().rotateZ(-PI / 2)), M(C.fish), [-0.42, -0.14, 0.14, 0.42].map((x, i) => [x, 1.08, 0.32, 0, 0.9 + (i % 2) * 0.15]));
     inst(fs, fishGeo(), M('#8a96a0'), [[-0.05, 0.52, 0.02, 0.2, 1], [0.05, 0.52, -0.22, -0.3, 0.9]]);
-    lpGlbSwap('fish-stall', bake(fs));   // 先烘再換；竹牌「魚鹽」有字，烘完才掛、不進 GLB
+    lpGlbSwap('fish-stall', bake(fs), { front: () => fs.children.filter(c => !c.userData.glbGroup) });   // 先烘再換；竹牌「魚鹽」有字，烘完才掛、不進 GLB；換上後 front 把竹牌推到 GLB 外
     A(fs, G.box(0.24, 0.44, 0.03), signMat('魚鹽'), [-0.5, 0.95, 0.44]);   // 竹牌「魚鹽」
     A(fs, G.cyl(0.012, 0.012, 0.25, 4), M(C.bambooDk), [-0.5, 1.23, 0.44]);
     P.tag(fs, 'fish');
@@ -2299,7 +2336,7 @@ function lpChibi(spec = {}) {
     for (const x of [-0.36, 0.36]) A(cart, G.cyl(0.018, 0.018, H, 5), bar, [x, BASE + H / 2, 0.34]);
     A(cart, G.box(1.06, 0.05, 0.06), M(C.woodDk), [0, BASE + 0.2, 0.34]);
     A(cart, G.box(1.2, 0.04, 0.86), M(C.woodLt), [0, top + 0.05, 0]);   // 頂板
-    lpGlbSwap('prison-cart', bake(cart));
+    lpGlbSwap('prison-cart', bake(cart), { fit: 1.5 });
     P.tag(cart, 'prison');
     chibi(P, g, { who: 'guanzhong', pose: 'bound', face: 'worried', scale: 0.88 }, pc[0], pc[1], CAMF(pc[0], pc[1]), 'prison', BASE);
     ss.prison = [-1.05, -1.25];
@@ -2328,7 +2365,7 @@ function lpChibi(spec = {}) {
       for (const sx of [-1, 1]) for (const sy of [-1, 1]) A(t, G.sph(0.06, 6, 4), null, [sx * 0.15, -0.25 + sy * 0.18, 0], [0, 0, sx * sy * 0.6], [1.3, 0.6, 0.4]);
     }));
     inst(bzr, skin, M('#ffffff'), [-0.5, -0.25, 0, 0.25, 0.5].map((x, i) => [x, 1.17, (i % 2) * 0.04, 0, 0.9 + (i % 2) * 0.1]), [C.sheep, '#e2d4b8', C.sheep, '#d9c9a8', C.sheep]);
-    lpGlbSwap('sheepskin-rack', bzr);   // 陶罐、竹簍、市旗（有字）留程式建模
+    lpGlbSwap('sheepskin-rack', bzr, { match: 'x', fit: 0 });   // 程式版是片薄架（深 0.10），改照架長對齊、不設深度上限；陶罐、竹簍、市旗（有字）留程式建模
     jar(bzr, -0.95, 0.15, 0.85); jar(bzr, -0.75, 0.42, 0.65, '#7a5a40');
     basket(bzr, 0.95, 0.3, { r: 0.16, h: 0.22, fill: [C.earth, C.ochre] });
     A(bzr, G.cyl(0.02, 0.02, 1.8, 5), M(C.woodDk), [1.05, 0.9, -0.15]);   // 市旗
@@ -2812,7 +2849,7 @@ function lpChibi(spec = {}) {
     const [bx0, bz0] = pt(214), bt = grp(wall, bx0, 0, bz0, faceTo(bx0, bz0, 0, 0));
     hangtu(bt, 0.95, 1.75, 0.95, 0, 0, 0, '#b08a5c', '#9c7a50');
     add(bt, lathe([[0.04, 0], [0.2, 0.06], [0.24, 0.18]], 12), '#4a4440', 0, 1.75, 0);
-    lpGlbSwap('beacon-tower', bt);   // 火與煙在後面另掛
+    lpGlbSwap('beacon-tower', bt, { fit: 2.3 });   // 火與煙在後面另掛（火盆 y=1.82）；GLB 比例矮胖，放寬寬度才能等高、火不懸空
     fire(P, bt, 0, 1.82, 0, 1.1);
     smoke(P, wall, bx0, 2.2, bz0, { n: 9, rise: 2.0, s0: 0.14, s1: 0.5, c: '#7d7670', op: 0.4, drift: [0.5, 0.6] });
     // 守城兵：牆頂、臉朝城內；旁邊一座戈架
@@ -2832,7 +2869,7 @@ function lpChibi(spec = {}) {
     gable(gt, 1.1, 0.62, 0.42, 1.88, { c: COL.tile, tile: true, gableC: '#c9b48a' });
     for (const s of [-1, 1]) { const d = grp(gt, s * 0.4, 0, 0.3); d.rotation.y = s * 0.9; box(d, 0.4, 1.0, 0.05, '#7a3a2c', -s * 0.2, 0.5, 0); }
     for (const s of [-1, 1]) add(gt, new THREE.CylinderGeometry(0.03, 0.025, 0.3, 6), COL.woodDk, s * 0.8, 1.0, 0.52);
-    const city = lpGlbSwap('city-gate', bake(gt));   // 火把、守門兵在烘完後才加（anim 要指著實際 mesh、chibi 不烘）
+    const city = lpGlbSwap('city-gate', bake(gt));   // 火把、守門兵在烘完後才加（anim 要指著實際 mesh、chibi 不烘）；實測 GLB 牆面在火把處 z≈0.45–0.49，火把(0.52)已在牆前，不需 front
     for (const s of [-1, 1]) fire(P, city, s * 0.8, 1.14, 0.52, 0.45);
     who(P, city, { who: 'soldier', pose: 'spear', face: 'calm', seed: 2 }, 0.75, 0.75, 0);
     P.tag(city, 'gate');

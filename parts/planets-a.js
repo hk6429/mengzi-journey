@@ -326,7 +326,7 @@
     A(fs, G.box(1.25, 0.02, 0.03), M(C.bambooDk), [0, 1.25, 0.32]);   // 曬魚竹竿＋四條掛魚
     inst(fs, once('fishV', () => fishGeo().clone().rotateZ(-PI / 2)), M(C.fish), [-0.42, -0.14, 0.14, 0.42].map((x, i) => [x, 1.08, 0.32, 0, 0.9 + (i % 2) * 0.15]));
     inst(fs, fishGeo(), M('#8a96a0'), [[-0.05, 0.52, 0.02, 0.2, 1], [0.05, 0.52, -0.22, -0.3, 0.9]]);
-    lpGlbSwap('fish-stall', bake(fs));   // 先烘再換；竹牌「魚鹽」有字，烘完才掛、不進 GLB
+    lpGlbSwap('fish-stall', bake(fs), { front: () => fs.children.filter(c => !c.userData.glbGroup) });   // 先烘再換；竹牌「魚鹽」有字，烘完才掛、不進 GLB；換上後 front 把竹牌推到 GLB 外
     A(fs, G.box(0.24, 0.44, 0.03), signMat('魚鹽'), [-0.5, 0.95, 0.44]);   // 竹牌「魚鹽」
     A(fs, G.cyl(0.012, 0.012, 0.25, 4), M(C.bambooDk), [-0.5, 1.23, 0.44]);
     P.tag(fs, 'fish');
@@ -349,7 +349,7 @@
     for (const x of [-0.36, 0.36]) A(cart, G.cyl(0.018, 0.018, H, 5), bar, [x, BASE + H / 2, 0.34]);
     A(cart, G.box(1.06, 0.05, 0.06), M(C.woodDk), [0, BASE + 0.2, 0.34]);
     A(cart, G.box(1.2, 0.04, 0.86), M(C.woodLt), [0, top + 0.05, 0]);   // 頂板
-    lpGlbSwap('prison-cart', bake(cart));
+    lpGlbSwap('prison-cart', bake(cart), { fit: 1.5 });
     P.tag(cart, 'prison');
     chibi(P, g, { who: 'guanzhong', pose: 'bound', face: 'worried', scale: 0.88 }, pc[0], pc[1], CAMF(pc[0], pc[1]), 'prison', BASE);
     ss.prison = [-1.05, -1.25];
@@ -378,7 +378,7 @@
       for (const sx of [-1, 1]) for (const sy of [-1, 1]) A(t, G.sph(0.06, 6, 4), null, [sx * 0.15, -0.25 + sy * 0.18, 0], [0, 0, sx * sy * 0.6], [1.3, 0.6, 0.4]);
     }));
     inst(bzr, skin, M('#ffffff'), [-0.5, -0.25, 0, 0.25, 0.5].map((x, i) => [x, 1.17, (i % 2) * 0.04, 0, 0.9 + (i % 2) * 0.1]), [C.sheep, '#e2d4b8', C.sheep, '#d9c9a8', C.sheep]);
-    lpGlbSwap('sheepskin-rack', bzr);   // 陶罐、竹簍、市旗（有字）留程式建模
+    lpGlbSwap('sheepskin-rack', bzr, { match: 'x', fit: 0 });   // 程式版是片薄架（深 0.10），改照架長對齊、不設深度上限；陶罐、竹簍、市旗（有字）留程式建模
     jar(bzr, -0.95, 0.15, 0.85); jar(bzr, -0.75, 0.42, 0.65, '#7a5a40');
     basket(bzr, 0.95, 0.3, { r: 0.16, h: 0.22, fill: [C.earth, C.ochre] });
     A(bzr, G.cyl(0.02, 0.02, 1.8, 5), M(C.woodDk), [1.05, 0.9, -0.15]);   // 市旗
