@@ -868,8 +868,8 @@ function lpGlbLoad(name) {
   return lpGlbSrc.get(name);
 }
 // 立即回傳 Group：先放 fallback()，載到模型後換掉；等比縮放到 height、腳底貼 y=0、水平置中、yaw 度數旋轉；補上 P.tag 的 pick
-function lpGlb(name, { height = 1, yaw = 0, fallback } = {}) {
-  const g = new THREE.Group(); g.name = 'glb-' + name; g.userData.glbReady = false;
+function lpGlb(name, { height = 1, width = 0, yaw = 0, fallback } = {}) {   // width>0：改用水平最大邊長等比縮放（扁平物件用）
+  const g = new THREE.Group(); g.name = 'glb-' + name; g.userData.glbReady = false; g.userData.glbGroup = true;
   let fb = null;
   try { fb = typeof fallback === 'function' ? fallback() : null; } catch (e) { console.warn('[glb] fallback 失敗 ' + name, e); }
   if (fb && fb.isObject3D) g.add(fb);
@@ -877,14 +877,32 @@ function lpGlb(name, { height = 1, yaw = 0, fallback } = {}) {
     if (!src) return;
     const m = src.clone(true), box = new THREE.Box3().setFromObject(m), size = box.getSize(new THREE.Vector3());
     if (!(size.y > 0)) { lpGlbWarn(name, '模型沒有高度'); return; }
-    const s = height / size.y, c = box.getCenter(new THREE.Vector3());
+    const s = width > 0 ? width / Math.max(size.x, size.z) : height / size.y, c = box.getCenter(new THREE.Vector3());
     const w = new THREE.Group(); w.name = 'glb-model'; w.rotation.y = yaw * Math.PI / 180; w.add(m);
     m.scale.multiplyScalar(s); m.position.set(-c.x * s, -box.min.y * s, -c.z * s);
-    const pk = g.userData.pick; m.traverse(o => { if (o.isMesh && pk) o.userData.pick = pk; });
+    let pk = null; for (let a = g; a && !pk; a = a.parent) pk = a.userData.pick;   // 第七輪：P.tag 可能標在外層（lpGlbSwap）
+    m.traverse(o => { if (o.isMesh && pk) o.userData.pick = pk; });
     if (fb) g.remove(fb);
     g.add(w); g.userData.glbReady = true; LP_GLB_GEN++;
   });
   return g;
+}
+
+// bake 用的走訪：遇到 GLB 群組（lpGlb 回傳的群組）整棵交給 keep(o)，不拆進合併網格——否則 GLB 載到後換不掉 fallback
+function lpBakeWalk(root, f, keep) { const w = o => { if (o !== root && o.userData.glbGroup) { keep(o); return; } f(o); o.children.forEach(w); }; w(root); }
+// 第七輪（Dzine 全面換 GLB）：把「已放好位置」的程式建模群組 obj 換成 models/<name>.glb。
+// obj 的子物件整批收進 fallback（obj 自己的位置／旋轉／縮放保留），所以沒有 GLB 時畫面與原本完全一樣；
+// 有 GLB 就等比縮到 o.height（預設＝程式建模本身的高度 max.y，原點須在底面中心、正面 +z）。obj 須是 Group，且之後不可再被 bake。
+function lpGlbSwap(name, obj, o = {}) {
+  if (!obj || !obj.isObject3D || obj.isMesh) return obj;
+  const fb = new THREE.Group(); fb.name = 'glb-fb-' + name;
+  [...obj.children].forEach(c => fb.add(c));
+  fb.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(fb);
+  const height = o.height || (box.isEmpty() || !(box.max.y > 0) ? 1 : box.max.y);
+  const width = o.fit === 'w' && !box.isEmpty() ? Math.max(box.max.x - box.min.x, box.max.z - box.min.z) : 0;   // fit:'w'＝扁平物件照水平長度縮
+  obj.add(lpGlb(name, { height, width, yaw: o.yaw || 0, fallback: () => fb }));
+  return obj;
 }
 
 // ---------- 事件匯流排 ----------
@@ -1977,12 +1995,12 @@ function lpChibi(spec = {}) {
   function bake(g) {
     g.updateMatrixWorld(true);
     const inv = g.matrixWorld.clone().invert(), by = new Map(), keep = [];
-    g.traverse(o => {
+    lpBakeWalk(g, o => {
       if (o.isInstancedMesh) { keep.push(o); return; }
       if (!o.isMesh) return;
       if (!by.has(o.material)) by.set(o.material, []);
       by.get(o.material).push(flatGeo(o, new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld)));
-    });
+    }, o => keep.push(o));   // GLB 群組整棵保留
     g.clear();
     by.forEach((list, mat) => g.add(new THREE.Mesh(BGU.mergeGeometries(list), mat)));
     keep.forEach(o => { new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld).decompose(o.position, o.quaternion, o.scale); g.add(o); });
@@ -2094,7 +2112,7 @@ function lpChibi(spec = {}) {
     A(t, G.box(0.22, 0.14, 0.02), M(C.ink), [0.26, 0.42, 0.405]);
     A(t, thatchGeo(0.78, 0.5, 5, 0.1), M(C.straw, { side: THREE.DoubleSide }), [0, 0.6, 0], null, [1.2, 1, 1.1]);
     A(t, G.cyl(0.05, 0.09, 0.1, 6), M(C.strawDk), [0, 1.12, 0]);
-    return bake(t);
+    return lpGlbSwap('thatched-hut', bake(t));
   }
   // 字牌材質（有 canvas 才畫字，直書；node 測試退回素色）
   const texMats = {};
@@ -2124,7 +2142,7 @@ function lpChibi(spec = {}) {
     [[V(0.03, 1.0, 0), V(0.4, 1.3, 0.08)], [V(0, 0.95, 0), V(-0.38, 1.25, -0.08)], [V(0.03, 1.2, 0), V(0.05, 1.6, 0.15)]].forEach(([a, b]) => rod(t, a, b, 0.04, bark, 5));
     [[0.42, 1.45, 0.1, 0.42], [-0.4, 1.4, -0.05, 0.4], [0.05, 1.75, 0.1, 0.45], [0.0, 1.45, -0.3, 0.38], [0.05, 1.4, 0.32, 0.36]]
       .forEach(([cx, cy, cz, r], i) => A(t, G.ico(r, 1), M(i % 2 ? crown2 : crown, { flat: true }), [cx, cy, cz], null, [1, 0.8, 1]));
-    return bake(t);
+    return lpGlbSwap('tree', bake(t));
   }
 
   // ================= 1. fields 舜發於畎畝之中，傅說舉於版築之間 =================
@@ -2258,9 +2276,9 @@ function lpChibi(spec = {}) {
     A(fs, G.box(1.25, 0.02, 0.03), M(C.bambooDk), [0, 1.25, 0.32]);   // 曬魚竹竿＋四條掛魚
     inst(fs, once('fishV', () => fishGeo().clone().rotateZ(-PI / 2)), M(C.fish), [-0.42, -0.14, 0.14, 0.42].map((x, i) => [x, 1.08, 0.32, 0, 0.9 + (i % 2) * 0.15]));
     inst(fs, fishGeo(), M('#8a96a0'), [[-0.05, 0.52, 0.02, 0.2, 1], [0.05, 0.52, -0.22, -0.3, 0.9]]);
+    lpGlbSwap('fish-stall', bake(fs));   // 先烘再換；竹牌「魚鹽」有字，烘完才掛、不進 GLB
     A(fs, G.box(0.24, 0.44, 0.03), signMat('魚鹽'), [-0.5, 0.95, 0.44]);   // 竹牌「魚鹽」
     A(fs, G.cyl(0.012, 0.012, 0.25, 4), M(C.bambooDk), [-0.5, 1.23, 0.44]);
-    bake(fs);
     P.tag(fs, 'fish');
     chibi(P, g, { who: 'jiaoge', pose: 'hold', face: 'smile' }, -1.75, 1.35, CAMF(-1.75, 1.35), 'fish');
     ss.fish = [-1.05, 1.85];
@@ -2281,7 +2299,7 @@ function lpChibi(spec = {}) {
     for (const x of [-0.36, 0.36]) A(cart, G.cyl(0.018, 0.018, H, 5), bar, [x, BASE + H / 2, 0.34]);
     A(cart, G.box(1.06, 0.05, 0.06), M(C.woodDk), [0, BASE + 0.2, 0.34]);
     A(cart, G.box(1.2, 0.04, 0.86), M(C.woodLt), [0, top + 0.05, 0]);   // 頂板
-    bake(cart);
+    lpGlbSwap('prison-cart', bake(cart));
     P.tag(cart, 'prison');
     chibi(P, g, { who: 'guanzhong', pose: 'bound', face: 'worried', scale: 0.88 }, pc[0], pc[1], CAMF(pc[0], pc[1]), 'prison', BASE);
     ss.prison = [-1.05, -1.25];
@@ -2310,6 +2328,7 @@ function lpChibi(spec = {}) {
       for (const sx of [-1, 1]) for (const sy of [-1, 1]) A(t, G.sph(0.06, 6, 4), null, [sx * 0.15, -0.25 + sy * 0.18, 0], [0, 0, sx * sy * 0.6], [1.3, 0.6, 0.4]);
     }));
     inst(bzr, skin, M('#ffffff'), [-0.5, -0.25, 0, 0.25, 0.5].map((x, i) => [x, 1.17, (i % 2) * 0.04, 0, 0.9 + (i % 2) * 0.1]), [C.sheep, '#e2d4b8', C.sheep, '#d9c9a8', C.sheep]);
+    lpGlbSwap('sheepskin-rack', bzr);   // 陶罐、竹簍、市旗（有字）留程式建模
     jar(bzr, -0.95, 0.15, 0.85); jar(bzr, -0.75, 0.42, 0.65, '#7a5a40');
     basket(bzr, 0.95, 0.3, { r: 0.16, h: 0.22, fill: [C.earth, C.ochre] });
     A(bzr, G.cyl(0.02, 0.02, 1.8, 5), M(C.woodDk), [1.05, 0.9, -0.15]);   // 市旗
@@ -2411,7 +2430,7 @@ function lpChibi(spec = {}) {
     for (const x of [-0.38, 0.38]) A(pav, G.box(0.06, 0.28, 0.24), M(C.woodDk), [x, 0.24, -0.4]);
     jar(pav, 0.55, 0.2, 0.9, '#7a6a58', 0.1);
     A(pav, G.cyl(0.05, 0.04, 0.08, 8), M(C.ochre), [0.38, 0.14, 0.38]);   // 小陶碗
-    bake(pav);
+    lpGlbSwap('rest-pavilion', bake(pav));
     P.tag(pav, 'rest');
     pav.updateMatrixWorld(true);
     const seat = V(-0.1, 0, -0.4).applyMatrix4(pav.matrixWorld), hp = V(-0.42, 0, 0.15).applyMatrix4(pav.matrixWorld);
@@ -2496,7 +2515,8 @@ function lpChibi(spec = {}) {
   function bake(root) {
     root.updateMatrixWorld(true);
     const inv = root.matrixWorld.clone().invert(), gs = [], keep = [], m4 = new THREE.Matrix4(), col = new THREE.Color();
-    root.traverse(o => {
+    const kg = [];
+    lpBakeWalk(root, o => {
       if (!o.isMesh) return;
       if (o.material.map || o.material.isMeshBasicMaterial) { keep.push([o, inv.clone().multiply(o.matrixWorld)]); return; }
       const base = inv.clone().multiply(o.matrixWorld), n = o.isInstancedMesh ? o.count : 1;
@@ -2509,10 +2529,11 @@ function lpChibi(spec = {}) {
         const c = new Float32Array(g.attributes.position.count * 3); for (let k = 0; k < c.length; k += 3) { col.toArray(c, k); if (vc) { c[k] *= vc.getX(k / 3); c[k + 1] *= vc.getY(k / 3); c[k + 2] *= vc.getZ(k / 3); } }
         g.setAttribute('color', new THREE.BufferAttribute(c, 3)); gs.push(g);
       }
-    });
+    }, o => kg.push([o, inv.clone().multiply(o.matrixWorld)]));   // GLB 群組整棵保留
     const out = new THREE.Group(); out.position.copy(root.position); out.rotation.copy(root.rotation); out.scale.copy(root.scale);
-    out.add(new THREE.Mesh(BGU.mergeGeometries(gs), M('#ffffff', { vertexColors: true, side: THREE.DoubleSide })));
+    if (gs.length) out.add(new THREE.Mesh(BGU.mergeGeometries(gs), M('#ffffff', { vertexColors: true, side: THREE.DoubleSide })));
     keep.forEach(([o, m]) => { const w = new THREE.Mesh(o.geometry, o.material); m.decompose(w.position, w.quaternion, w.scale); out.add(w); });
+    kg.forEach(([o, m]) => { m.decompose(o.position, o.quaternion, o.scale); out.add(o); });
     if (root.parent) { root.parent.add(out); root.parent.remove(root); }
     return out;
   }
@@ -2730,7 +2751,7 @@ function lpChibi(spec = {}) {
     inst(hs, new THREE.BoxGeometry(0.8, 0.016, 0.012), '#d6c08a', Array.from({ length: 12 }, (_, i) => ({ x: 0.97, y: 1.6 - i * 0.026, z: 0.78 })));   // 右開間竹簾半垂
     add(hs, new THREE.CylinderGeometry(0.035, 0.035, 0.84, 8).rotateZ(PI / 2), '#c4ac70', 0.97, 1.3, 0.79);
     gable(hs, 1.55, 1.05, 0.72, 1.66, { c: COL.thatch, gableC: COL.plaster });
-    const study = bake(hs);
+    const study = lpGlbSwap('study-hall', bake(hs), { fit: 'w' });
     bamboo(P, G, -3.05, -2.05, { n: 8, h: 2.3, r: 0.3, c: '#9aa866' });
     bamboo(P, G, 3.0, -2.2, { n: 6, h: 2.0, r: 0.26, c: '#9aa866' });
     P.tag(study, 'study');
@@ -2791,6 +2812,7 @@ function lpChibi(spec = {}) {
     const [bx0, bz0] = pt(214), bt = grp(wall, bx0, 0, bz0, faceTo(bx0, bz0, 0, 0));
     hangtu(bt, 0.95, 1.75, 0.95, 0, 0, 0, '#b08a5c', '#9c7a50');
     add(bt, lathe([[0.04, 0], [0.2, 0.06], [0.24, 0.18]], 12), '#4a4440', 0, 1.75, 0);
+    lpGlbSwap('beacon-tower', bt);   // 火與煙在後面另掛
     fire(P, bt, 0, 1.82, 0, 1.1);
     smoke(P, wall, bx0, 2.2, bz0, { n: 9, rise: 2.0, s0: 0.14, s1: 0.5, c: '#7d7670', op: 0.4, drift: [0.5, 0.6] });
     // 守城兵：牆頂、臉朝城內；旁邊一座戈架
@@ -2810,7 +2832,7 @@ function lpChibi(spec = {}) {
     gable(gt, 1.1, 0.62, 0.42, 1.88, { c: COL.tile, tile: true, gableC: '#c9b48a' });
     for (const s of [-1, 1]) { const d = grp(gt, s * 0.4, 0, 0.3); d.rotation.y = s * 0.9; box(d, 0.4, 1.0, 0.05, '#7a3a2c', -s * 0.2, 0.5, 0); }
     for (const s of [-1, 1]) add(gt, new THREE.CylinderGeometry(0.03, 0.025, 0.3, 6), COL.woodDk, s * 0.8, 1.0, 0.52);
-    const city = bake(gt);   // 火把、守門兵在烘完後才加（anim 要指著實際 mesh、chibi 不烘）
+    const city = lpGlbSwap('city-gate', bake(gt));   // 火把、守門兵在烘完後才加（anim 要指著實際 mesh、chibi 不烘）
     for (const s of [-1, 1]) fire(P, city, s * 0.8, 1.14, 0.52, 0.45);
     who(P, city, { who: 'soldier', pose: 'spear', face: 'calm', seed: 2 }, 0.75, 0.75, 0);
     P.tag(city, 'gate');
@@ -2826,7 +2848,7 @@ function lpChibi(spec = {}) {
     box(hall, 0.8, 0.06, 0.5, '#c8b27c', 0, 0.33, -0.2);                                                     // 君席
     inst(hall, new THREE.BoxGeometry(1, 1, 1), COL.wood, [0.6, -0.6].map(z => ({ y: 1.42, z, sx: 2.0, sy: 0.08, sz: 0.08 })));
     gable(hall, 1.15, 0.85, 0.55, 1.46, { c: COL.tile, tile: true, gableC: COL.plaster });
-    bake(hall);
+    lpGlbSwap('council-hall', bake(hall));
     who(P, ct, { who: 'minister', pose: 'bow', face: 'worried' }, 0.42, 1.05, 18);
     who(P, ct, { who: 'scholar', pose: 'talk', face: 'calm', seed: 3 }, -0.45, 1.25, -10);
     P.tag(ct, 'court');

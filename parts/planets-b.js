@@ -46,7 +46,8 @@
   function bake(root) {
     root.updateMatrixWorld(true);
     const inv = root.matrixWorld.clone().invert(), gs = [], keep = [], m4 = new THREE.Matrix4(), col = new THREE.Color();
-    root.traverse(o => {
+    const kg = [];
+    lpBakeWalk(root, o => {
       if (!o.isMesh) return;
       if (o.material.map || o.material.isMeshBasicMaterial) { keep.push([o, inv.clone().multiply(o.matrixWorld)]); return; }
       const base = inv.clone().multiply(o.matrixWorld), n = o.isInstancedMesh ? o.count : 1;
@@ -59,10 +60,11 @@
         const c = new Float32Array(g.attributes.position.count * 3); for (let k = 0; k < c.length; k += 3) { col.toArray(c, k); if (vc) { c[k] *= vc.getX(k / 3); c[k + 1] *= vc.getY(k / 3); c[k + 2] *= vc.getZ(k / 3); } }
         g.setAttribute('color', new THREE.BufferAttribute(c, 3)); gs.push(g);
       }
-    });
+    }, o => kg.push([o, inv.clone().multiply(o.matrixWorld)]));   // GLB 群組整棵保留
     const out = new THREE.Group(); out.position.copy(root.position); out.rotation.copy(root.rotation); out.scale.copy(root.scale);
-    out.add(new THREE.Mesh(BGU.mergeGeometries(gs), M('#ffffff', { vertexColors: true, side: THREE.DoubleSide })));
+    if (gs.length) out.add(new THREE.Mesh(BGU.mergeGeometries(gs), M('#ffffff', { vertexColors: true, side: THREE.DoubleSide })));
     keep.forEach(([o, m]) => { const w = new THREE.Mesh(o.geometry, o.material); m.decompose(w.position, w.quaternion, w.scale); out.add(w); });
+    kg.forEach(([o, m]) => { m.decompose(o.position, o.quaternion, o.scale); out.add(o); });
     if (root.parent) { root.parent.add(out); root.parent.remove(root); }
     return out;
   }
@@ -280,7 +282,7 @@
     inst(hs, new THREE.BoxGeometry(0.8, 0.016, 0.012), '#d6c08a', Array.from({ length: 12 }, (_, i) => ({ x: 0.97, y: 1.6 - i * 0.026, z: 0.78 })));   // 右開間竹簾半垂
     add(hs, new THREE.CylinderGeometry(0.035, 0.035, 0.84, 8).rotateZ(PI / 2), '#c4ac70', 0.97, 1.3, 0.79);
     gable(hs, 1.55, 1.05, 0.72, 1.66, { c: COL.thatch, gableC: COL.plaster });
-    const study = bake(hs);
+    const study = lpGlbSwap('study-hall', bake(hs), { fit: 'w' });
     bamboo(P, G, -3.05, -2.05, { n: 8, h: 2.3, r: 0.3, c: '#9aa866' });
     bamboo(P, G, 3.0, -2.2, { n: 6, h: 2.0, r: 0.26, c: '#9aa866' });
     P.tag(study, 'study');
@@ -341,6 +343,7 @@
     const [bx0, bz0] = pt(214), bt = grp(wall, bx0, 0, bz0, faceTo(bx0, bz0, 0, 0));
     hangtu(bt, 0.95, 1.75, 0.95, 0, 0, 0, '#b08a5c', '#9c7a50');
     add(bt, lathe([[0.04, 0], [0.2, 0.06], [0.24, 0.18]], 12), '#4a4440', 0, 1.75, 0);
+    lpGlbSwap('beacon-tower', bt);   // 火與煙在後面另掛
     fire(P, bt, 0, 1.82, 0, 1.1);
     smoke(P, wall, bx0, 2.2, bz0, { n: 9, rise: 2.0, s0: 0.14, s1: 0.5, c: '#7d7670', op: 0.4, drift: [0.5, 0.6] });
     // 守城兵：牆頂、臉朝城內；旁邊一座戈架
@@ -360,7 +363,7 @@
     gable(gt, 1.1, 0.62, 0.42, 1.88, { c: COL.tile, tile: true, gableC: '#c9b48a' });
     for (const s of [-1, 1]) { const d = grp(gt, s * 0.4, 0, 0.3); d.rotation.y = s * 0.9; box(d, 0.4, 1.0, 0.05, '#7a3a2c', -s * 0.2, 0.5, 0); }
     for (const s of [-1, 1]) add(gt, new THREE.CylinderGeometry(0.03, 0.025, 0.3, 6), COL.woodDk, s * 0.8, 1.0, 0.52);
-    const city = bake(gt);   // 火把、守門兵在烘完後才加（anim 要指著實際 mesh、chibi 不烘）
+    const city = lpGlbSwap('city-gate', bake(gt));   // 火把、守門兵在烘完後才加（anim 要指著實際 mesh、chibi 不烘）
     for (const s of [-1, 1]) fire(P, city, s * 0.8, 1.14, 0.52, 0.45);
     who(P, city, { who: 'soldier', pose: 'spear', face: 'calm', seed: 2 }, 0.75, 0.75, 0);
     P.tag(city, 'gate');
@@ -376,7 +379,7 @@
     box(hall, 0.8, 0.06, 0.5, '#c8b27c', 0, 0.33, -0.2);                                                     // 君席
     inst(hall, new THREE.BoxGeometry(1, 1, 1), COL.wood, [0.6, -0.6].map(z => ({ y: 1.42, z, sx: 2.0, sy: 0.08, sz: 0.08 })));
     gable(hall, 1.15, 0.85, 0.55, 1.46, { c: COL.tile, tile: true, gableC: COL.plaster });
-    bake(hall);
+    lpGlbSwap('council-hall', bake(hall));
     who(P, ct, { who: 'minister', pose: 'bow', face: 'worried' }, 0.42, 1.05, 18);
     who(P, ct, { who: 'scholar', pose: 'talk', face: 'calm', seed: 3 }, -0.45, 1.25, -10);
     P.tag(ct, 'court');

@@ -368,8 +368,8 @@ function lpGlbLoad(name) {
   return lpGlbSrc.get(name);
 }
 // 立即回傳 Group：先放 fallback()，載到模型後換掉；等比縮放到 height、腳底貼 y=0、水平置中、yaw 度數旋轉；補上 P.tag 的 pick
-function lpGlb(name, { height = 1, yaw = 0, fallback } = {}) {
-  const g = new THREE.Group(); g.name = 'glb-' + name; g.userData.glbReady = false;
+function lpGlb(name, { height = 1, width = 0, yaw = 0, fallback } = {}) {   // width>0：改用水平最大邊長等比縮放（扁平物件用）
+  const g = new THREE.Group(); g.name = 'glb-' + name; g.userData.glbReady = false; g.userData.glbGroup = true;
   let fb = null;
   try { fb = typeof fallback === 'function' ? fallback() : null; } catch (e) { console.warn('[glb] fallback 失敗 ' + name, e); }
   if (fb && fb.isObject3D) g.add(fb);
@@ -377,14 +377,32 @@ function lpGlb(name, { height = 1, yaw = 0, fallback } = {}) {
     if (!src) return;
     const m = src.clone(true), box = new THREE.Box3().setFromObject(m), size = box.getSize(new THREE.Vector3());
     if (!(size.y > 0)) { lpGlbWarn(name, '模型沒有高度'); return; }
-    const s = height / size.y, c = box.getCenter(new THREE.Vector3());
+    const s = width > 0 ? width / Math.max(size.x, size.z) : height / size.y, c = box.getCenter(new THREE.Vector3());
     const w = new THREE.Group(); w.name = 'glb-model'; w.rotation.y = yaw * Math.PI / 180; w.add(m);
     m.scale.multiplyScalar(s); m.position.set(-c.x * s, -box.min.y * s, -c.z * s);
-    const pk = g.userData.pick; m.traverse(o => { if (o.isMesh && pk) o.userData.pick = pk; });
+    let pk = null; for (let a = g; a && !pk; a = a.parent) pk = a.userData.pick;   // 第七輪：P.tag 可能標在外層（lpGlbSwap）
+    m.traverse(o => { if (o.isMesh && pk) o.userData.pick = pk; });
     if (fb) g.remove(fb);
     g.add(w); g.userData.glbReady = true; LP_GLB_GEN++;
   });
   return g;
+}
+
+// bake 用的走訪：遇到 GLB 群組（lpGlb 回傳的群組）整棵交給 keep(o)，不拆進合併網格——否則 GLB 載到後換不掉 fallback
+function lpBakeWalk(root, f, keep) { const w = o => { if (o !== root && o.userData.glbGroup) { keep(o); return; } f(o); o.children.forEach(w); }; w(root); }
+// 第七輪（Dzine 全面換 GLB）：把「已放好位置」的程式建模群組 obj 換成 models/<name>.glb。
+// obj 的子物件整批收進 fallback（obj 自己的位置／旋轉／縮放保留），所以沒有 GLB 時畫面與原本完全一樣；
+// 有 GLB 就等比縮到 o.height（預設＝程式建模本身的高度 max.y，原點須在底面中心、正面 +z）。obj 須是 Group，且之後不可再被 bake。
+function lpGlbSwap(name, obj, o = {}) {
+  if (!obj || !obj.isObject3D || obj.isMesh) return obj;
+  const fb = new THREE.Group(); fb.name = 'glb-fb-' + name;
+  [...obj.children].forEach(c => fb.add(c));
+  fb.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(fb);
+  const height = o.height || (box.isEmpty() || !(box.max.y > 0) ? 1 : box.max.y);
+  const width = o.fit === 'w' && !box.isEmpty() ? Math.max(box.max.x - box.min.x, box.max.z - box.min.z) : 0;   // fit:'w'＝扁平物件照水平長度縮
+  obj.add(lpGlb(name, { height, width, yaw: o.yaw || 0, fallback: () => fb }));
+  return obj;
 }
 
 // ---------- 事件匯流排 ----------

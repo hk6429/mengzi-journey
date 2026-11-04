@@ -6,3 +6,5 @@ review/
 .env
 .env.*
 public/voice/*.mp3
+
+art/
